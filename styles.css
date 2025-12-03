@@ -6,9 +6,9 @@
 
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* 🌟 수정: 배경 그라데이션을 제거하고 깔끔한 흰색 또는 매우 밝은 회색으로 변경 */
+    background: #f8f8f8; 
     min-height: 100vh;
-    /* 🌟 추가: height 100%를 설정하여 flex container의 높이를 명확히 지정 */
     height: 100%; 
     display: flex;
     justify-content: center;
@@ -22,8 +22,8 @@ body {
     max-width: 800px; 
     background: white;
     border-radius: 30px;
-    /* 🌟 수정: 모바일에서 box-shadow가 배경과 겹쳐 길쭉한 착시를 주지 않도록 조정 */
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); 
+    /* 🌟 수정: 배경이 흰색이므로 box-shadow를 좀 더 부드럽게 조정 */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); 
     overflow: hidden;
     animation: fadeIn 0.5s ease-out;
 }
@@ -40,6 +40,7 @@ body {
 }
 
 .header {
+    /* 🌟 배경은 그대로 유지하여 헤더만 포인트를 줍니다. */
     background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%); 
     padding: 30px;
     text-align: center;
@@ -83,6 +84,7 @@ body {
 }
 
 .start-btn {
+    /* 🌟 버튼색상 (파란색 그라데이션)은 유지 */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
@@ -121,6 +123,7 @@ body {
 }
 
 .category-btn {
+    /* 🌟 버튼색상 (핑크 그라데이션) 유지 */
     background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%); 
     color: white;
     border: none;
@@ -152,7 +155,8 @@ body {
     position: fixed; 
     top: 20px;
     left: 20px;
-    background: rgba(255, 255, 255, 0.9);
+    /* 🌟 배경이 흰색에 가까워졌으므로 버튼 배경색을 투명도 없이 흰색으로 고정 */
+    background: white; 
     color: #667eea;
     border: 2px solid #667eea;
     padding: 10px 20px;
@@ -176,7 +180,7 @@ body {
 }
 
 .progress-bar {
-    background: #f0f0f0;
+    background: #e0e0e0; /* 🌟 배경색과 구분되도록 약간 어둡게 설정 */
     height: 10px;
     border-radius: 10px;
     margin-bottom: 30px;
@@ -204,7 +208,7 @@ body {
     border-radius: 20px;
     margin-bottom: 30px;
     text-align: center;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* 그림자 부드럽게 조정 */
 }
 
 .question-box h2 {
@@ -407,25 +411,21 @@ body {
 /* 6. 미디어 쿼리 (반응형) */
 /* -------------------------------------- */
 @media (max-width: 768px) {
-    /* 🌟 body 패딩을 0으로 설정하여 container가 화면 전체를 꽉 채우도록 합니다. */
     body {
         padding: 0; 
-        /* 🌟 추가: body 높이 100%를 다시 설정하여 모바일 뷰포트를 명확히 합니다. */
         height: 100%;
     }
     
-    /* 🌟 container가 모바일 화면의 전체 높이와 너비를 차지하도록 설정합니다. */
     .container {
         border-radius: 0; 
         min-height: 100vh;
         max-width: 100%; 
-        /* 🌟 추가: 모바일에서 그림자를 제거하거나 줄여서 시각적 압박을 줄입니다. */
+        /* 🌟 모바일에서 박스 그림자를 완전히 제거하여 깔끔한 흰색 배경을 보장 */
         box-shadow: none; 
     }
     
-    /* 🔴 content 내부 패딩은 여백 확보를 위해 20px로 유지합니다. */
     .content {
-        padding: 20px;
+        padding: 20px; 
     }
     
     .header h1 {
@@ -453,7 +453,6 @@ body {
         padding: 25px 20px;
     }
     
-    /* 모바일에서 뒤로가기 버튼 위치 조정 */
     .back-btn {
         top: 10px;
         left: 10px;
