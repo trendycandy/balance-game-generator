@@ -3,26 +3,31 @@
     padding: 0;
     box-sizing: border-box;
 }
+
 body {
     font-family: 'Noto Sans KR', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+    /* 🌟 추가: height 100%를 설정하여 flex container의 높이를 명확히 지정 */
+    height: 100%; 
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px; /* ⬅️ PC/Tablet 기본 패딩 유지 */
+    padding: 20px; 
     overflow-x: hidden;
 }
 
 .container {
     width: 100%;
-    max-width: 800px; /* ⬅️ PC/Tablet 최대 폭 제한 */
+    max-width: 800px; 
     background: white;
     border-radius: 30px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    /* 🌟 수정: 모바일에서 box-shadow가 배경과 겹쳐 길쭉한 착시를 주지 않도록 조정 */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); 
     overflow: hidden;
     animation: fadeIn 0.5s ease-out;
 }
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -35,7 +40,6 @@ body {
 }
 
 .header {
-    /* 🔴 수정: 핑크 그라데이션을 살짝 톤 다운하거나, 대비를 낮춥니다. */
     background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%); 
     padding: 30px;
     text-align: center;
@@ -55,7 +59,6 @@ body {
 }
 
 .content {
-    /* 🔴 수정: PC/Tablet 콘텐츠 패딩을 조금 줄여서 중앙 집중도를 높입니다. */
     padding: 30px; 
 }
 
@@ -118,7 +121,7 @@ body {
 }
 
 .category-btn {
-    background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%); /* 🔴 수정: 헤더와 같은 톤 다운된 핑크 */
+    background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%); 
     color: white;
     border: none;
     padding: 25px 20px;
@@ -196,13 +199,12 @@ body {
 }
 
 .question-box {
-    /* 🔴 수정: 핑크 계열의 배경색을 좀 더 부드러운 노란색 계열로 변경하여 가독성을 높입니다. */
     background: #fffbe6; 
     padding: 30px;
     border-radius: 20px;
     margin-bottom: 30px;
     text-align: center;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); 
 }
 
 .question-box h2 {
@@ -348,7 +350,7 @@ body {
 }
 
 .action-btn.secondary {
-    background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%); /* 🔴 수정: 톤 다운된 핑크 */
+    background: linear-gradient(135deg, #ff99c8 0%, #f5576c 100%);
     box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
 }
 
@@ -359,7 +361,6 @@ body {
 /* -------------------------------------- */
 /* 5. 로딩 화면 */
 /* -------------------------------------- */
-/* (로딩 화면 스타일은 그대로 유지) */
 .loading-overlay {
     display: none; 
     position: fixed;
@@ -409,14 +410,17 @@ body {
     /* 🌟 body 패딩을 0으로 설정하여 container가 화면 전체를 꽉 채우도록 합니다. */
     body {
         padding: 0; 
+        /* 🌟 추가: body 높이 100%를 다시 설정하여 모바일 뷰포트를 명확히 합니다. */
+        height: 100%;
     }
     
     /* 🌟 container가 모바일 화면의 전체 높이와 너비를 차지하도록 설정합니다. */
     .container {
         border-radius: 0; 
         min-height: 100vh;
-        /* max-width는 768px 이하에서 적용되지 않지만, 명확하게 설정 */
         max-width: 100%; 
+        /* 🌟 추가: 모바일에서 그림자를 제거하거나 줄여서 시각적 압박을 줄입니다. */
+        box-shadow: none; 
     }
     
     /* 🔴 content 내부 패딩은 여백 확보를 위해 20px로 유지합니다. */
@@ -427,8 +431,6 @@ body {
     .header h1 {
         font-size: 2em;
     }
-
-    /* ... (나머지 모바일 스타일은 그대로 유지) ... */
 
     .category-grid {
         grid-template-columns: 1fr;
@@ -461,5 +463,10 @@ body {
     
     .game-screen {
         padding-top: 50px; 
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
     }
 }
