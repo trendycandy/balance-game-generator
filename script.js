@@ -1,4 +1,4 @@
-// 카테고리 정의
+// 카테고리 정의 (HTML에서 버튼 생성에 사용)
 const categories = [
     { id: 'daily', name: '일상생활', emoji: '🏠' },
     { id: 'ideal-male', name: '이상형-남자', emoji: '👨' },
@@ -23,8 +23,9 @@ let todaySeed = null;
 
 // 초기화
 function init() {
-    // 오늘 날짜 표시
+    // 오늘 날짜 표시 및 시드 설정
     const today = new Date();
+    // Vercel Cron Job과 Firebase 캐시 키가 이 시드를 기준으로 작동합니다.
     todaySeed = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
     document.getElementById('todayDate').textContent = 
         `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
@@ -38,6 +39,12 @@ function init() {
         btn.onclick = () => selectCategory(cat);
         categoryGrid.appendChild(btn);
     });
+    
+    // 페이지 로드 시 시작 화면 표시
+    document.getElementById('startScreen').style.display = 'block';
+    document.getElementById('categoryScreen').style.display = 'none';
+    document.getElementById('gameScreen').style.display = 'none';
+    document.getElementById('resultScreen').style.display = 'none';
 }
 
 // 카테고리 선택 화면 표시
@@ -54,20 +61,21 @@ async function selectCategory(category) {
     showLoading();
 
     try {
-        // 캐시된 질문 확인
+        // 클라이언트 측 캐시 확인
         const cacheKey = `questions_${category.id}_${todaySeed}`;
         const cached = localStorage.getItem(cacheKey);
         
         if (cached) {
-            // 캐시된 질문 사용
+            // 1. 클라이언트 캐시 적중: 저장된 질문 사용
             questions = JSON.parse(cached);
-            console.log('캐시된 질문 사용:', category.name);
+            console.log('클라이언트 캐시된 질문 사용:', category.name);
         } else {
-            // AI로 새 질문 생성
+            // 2. 클라이언트 캐시 미스: 서버에 질문 요청
             await generateQuestions(category);
-            // 캐시에 저장
+            
+            // 서버에서 새로 생성/가져온 질문을 클라이언트 캐시에 저장
             localStorage.setItem(cacheKey, JSON.stringify(questions));
-            console.log('새 질문 생성 및 캐시 저장:', category.name);
+            console.log('서버에서 질문 로드 후 클라이언트 캐시 저장:', category.name);
         }
         
         // 게임 시작
@@ -75,20 +83,21 @@ async function selectCategory(category) {
         startGame();
     } catch (error) {
         hideLoading();
-        alert('질문 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
-        console.error(error);
+        alert('질문 로드 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        console.error("질문 로드 오류:", error);
     }
 }
 
-// Vercel Serverless Function으로 질문 생성
+// Vercel Serverless Function으로 질문 생성/가져오기
 async function generateQuestions(category) {
-    // 🀄 마작 카테고리는 미리 준비된 질문만 사용 (AI 생성 건너뛰기)
+    // 🀄 마작 카테고리는 AI 생성에서 제외하고 Fallback만 사용 (서버와 로직 통일)
     if (category.id === 'mahjong') {
-        console.log('마작 카테고리: 미리 준비된 질문 사용');
+        console.log('마작 카테고리: 미리 준비된 Fallback 질문 사용');
         questions = getFallbackQuestions('mahjong');
         return;
     }
 
+    // 서버리스 함수와 동일한 카테고리 설명 (프롬프트 일관성 유지)
     const categoryDescriptions = {
         'daily': '일상생활 (음식, 수면, 생활 습관, 편의 등)',
         'ideal-male': '남자 이상형 (외모, 성격, 능력, 스타일 등)',
@@ -96,7 +105,6 @@ async function generateQuestions(category) {
         'school': '학교생활 (수업, 친구, 동아리, 시험 등)',
         'work': '회사생활 (업무, 동료, 회식, 직장 문화 등)',
         'hobby': '덕질생활 (아이돌, 콘텐츠, 굿즈, 팬덤 등)',
-        'mahjong': '리치마작 (좋아하는 역, 타패 전략, 게임 상황 등)',
         'ability': '능력/초능력 (텔레포트, 투명화, 시간조작, 마법 등)',
         'relationship': '연애/관계 (연애 스타일, 데이트, 애정표현 등)',
         'money': '돈/재테크 (투자, 저축, 소비, 재무 목표 등)',
@@ -105,7 +113,7 @@ async function generateQuestions(category) {
     };
 
     try {
-        // Vercel Serverless Function 호출
+        // Vercel Serverless Function 호출 (POST)
         const response = await fetch('/api/generate-questions', {
             method: 'POST',
             headers: {
@@ -121,16 +129,18 @@ async function generateQuestions(category) {
         if (!response.ok) {
             const errorData = await response.json();
             console.error('API 에러:', errorData);
-            throw new Error(errorData.error || 'API 호출 실패');
+            // 서버에서 에러가 발생해도, 사용자 경험을 위해 Fallback 사용
+            throw new Error(errorData.error || 'API 호출 실패'); 
         }
 
         const data = await response.json();
         
         if (data.success && data.questions && data.questions.length === 10) {
             questions = data.questions;
-            console.log('AI 질문 생성 성공:', category.name);
+            console.log(`서버 응답 성공: ${data.source} (${category.name})`);
         } else {
-            throw new Error('질문 형식이 올바르지 않습니다');
+            // 서버 응답이 성공(response.ok)했지만 질문 배열이 10개가 아니거나 구조가 이상할 때
+            throw new Error('질문 형식이 올바르지 않거나 10개 미만입니다.');
         }
     } catch (error) {
         console.error('질문 생성 실패, Fallback 사용:', error);
@@ -410,7 +420,7 @@ function getFallbackQuestions(categoryId) {
 
     const allQuestions = fallbackData[categoryId] || fallbackData['daily'];
     
-    // 날짜 기반 시드로 랜덤하게 10개 선택 (같은 날은 같은 질문)
+    // 날짜 기반 시드로 랜덤하게 10개 선택 (같은 날짜면 같은 질문)
     const randomIndices = seededShuffle([...Array(allQuestions.length).keys()], todaySeed).slice(0, 10);
     
     return randomIndices.map(i => allQuestions[i]);
@@ -461,11 +471,12 @@ function startGame() {
 // 질문 표시
 function showQuestion() {
     const question = questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / 10) * 100;
+    const totalQuestions = questions.length;
+    const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
     
     document.getElementById('progressFill').style.width = progress + '%';
     document.getElementById('progressText').textContent = 
-        `${currentQuestionIndex + 1} / 10`;
+        `${currentQuestionIndex + 1} / ${totalQuestions}`; // 10개로 수정
     document.getElementById('questionText').textContent = 
         `${question.option1} VS ${question.option2}`;
     
@@ -489,7 +500,8 @@ function showQuestion() {
 function selectAnswer(choiceIndex) {
     answers.push(choiceIndex);
     
-    if (currentQuestionIndex < 9) {
+    // 질문 개수가 10개로 고정되었으므로 questions.length를 사용
+    if (currentQuestionIndex < questions.length - 1) { 
         currentQuestionIndex++;
         showQuestion();
     } else {
@@ -540,6 +552,7 @@ async function downloadResult() {
     const resultContainer = document.getElementById('resultContainer');
     
     try {
+        // html2canvas는 전역으로 로드되었다고 가정
         const canvas = await html2canvas(resultContainer, {
             backgroundColor: '#f9f9f9',
             scale: 2
@@ -555,7 +568,7 @@ async function downloadResult() {
     }
 }
 
-// 다시 하기
+// 다시 하기 (처음 화면으로)
 function restartGame() {
     document.getElementById('resultScreen').style.display = 'none';
     document.getElementById('startScreen').style.display = 'block';
@@ -563,6 +576,7 @@ function restartGame() {
     questions = [];
     currentQuestionIndex = 0;
     answers = [];
+    // 로컬 스토리지는 유지 (하루 동안 같은 질문을 받도록)
 }
 
 // 게임 중 카테고리로 돌아가기
