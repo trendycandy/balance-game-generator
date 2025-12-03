@@ -51,17 +51,17 @@ module.exports = async function handler(req, res) {
 4. 간결성: 핵심만 표현하세요.
 
 5. **밸런스 (매우 중요!)**: 두 선택지는 반드시 비슷한 수준이어야 합니다.
-   ✗ 나쁜 예: "알람 없이 개운함" vs "알람 열 개에도 피곤함" (불공평 - 첫 번째가 명백히 좋음)
-   ✗ 나쁜 예: "한 달에 한 번 청소" vs "청소해도 늘 지저분함" (불공평 - 첫 번째가 명백히 좋음)
-   ✗ 나쁜 예: "100만원 받기" vs "아무것도 안 받기" (불공평)
-   ✓ 좋은 예: "알람 없이 6시 기상" vs "알람 10개 필요하지만 9시 기상"
-   ✓ 좋은 예: "한 달에 한 번 대청소하지만 힘듦" vs "매일 10분 청소"
-   ✓ 좋은 예: "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
+   ✗ 나쁜 예: "알람 없이 개운함" vs "알람 열 개에도 피곤함" (불공평 - 첫 번째가 명백히 좋음)
+   ✗ 나쁜 예: "한 달에 한 번 청소" vs "청소해도 늘 지저분함" (불공평 - 첫 번째가 명백히 좋음)
+   ✗ 나쁜 예: "100만원 받기" vs "아무것도 안 받기" (불공평)
+   ✓ 좋은 예: "알람 없이 6시 기상" vs "알람 10개 필요하지만 9시 기상"
+   ✓ 좋은 예: "한 달에 한 번 대청소하지만 힘듦" vs "매일 10분 청소"
+   ✓ 좋은 예: "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
 
 6. Trade-off 구조: 각 선택지는 "장점 + 단점" 또는 "서로 다른 가치" 구조여야 함.
-   - 선택지1: 좋은 점A + 나쁜 점B
-   - 선택지2: 좋은 점C + 나쁜 점D
-   - A와 C의 가치가 비슷해야 함!
+   - 선택지1: 좋은 점A + 나쁜 점B
+   - 선택지2: 좋은 점C + 나쁜 점D
+   - A와 C의 가치가 비슷해야 함!
 
 7. 창의성: 재미있고 진짜 고민되는 질문.
 
@@ -77,8 +77,8 @@ module.exports = async function handler(req, res) {
 
 출력 형식 (JSON 배열만, 15개):
 [
-  {"option1": "간결한 선택지1", "option2": "간결한 선택지2"},
-  ... (총 15개)
+  {"option1": "간결한 선택지1", "option2": "간결한 선택지2"},
+  ... (총 15개)
 ]
 
 JSON 배열만 출력하세요.`;
@@ -99,7 +99,8 @@ JSON 배열만 출력하세요.`;
                     }],
                     generationConfig: {
                         temperature: 0.9,
-                        maxOutputTokens: 4000,
+                        // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 4000으로 충분히 설정
+                        maxOutputTokens: 4000, 
                         topP: 0.95,
                         topK: 64
                     }
@@ -110,8 +111,8 @@ JSON 배열만 출력하세요.`;
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Gemini API 에러:', response.status, errorText);
-            return res.status(response.status).json({ 
-                error: 'AI 질문 생성 실패', 
+            return res.status(response.status).json({ 
+                error: 'AI 질문 생성 실패', 
                 details: errorText,
                 status: response.status
             });
@@ -120,8 +121,22 @@ JSON 배열만 출력하세요.`;
         const data = await response.json();
         console.log('Gemini API 응답:', JSON.stringify(data).substring(0, 200));
         
-        // Gemini 응답 구조 확인
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        const candidate = data.candidates?.[0]; // 옵셔널 체이닝으로 candidates[0] 접근
+
+        // *** 에러 수정 부분: 응답 구조의 유효성을 더욱 엄격하게 검사 ***
+        // candidates, content, parts, 그리고 최종 text까지 모두 존재하는지 확인
+        if (!candidate || !candidate.content || candidate.content.parts?.length === 0 || !candidate.content.parts?.[0]?.text) {
+            
+            // MAX_TOKENS 에러를 명시적으로 처리
+            if (candidate && candidate.finishReason === 'MAX_TOKENS') {
+                 console.error('API 응답 불완전 (MAX_TOKENS):', JSON.stringify(data));
+                 return res.status(500).json({
+                     error: 'AI 응답이 최대 토큰 제한으로 인해 불완전합니다. maxOutputTokens 설정을 확인하세요.',
+                     response: data,
+                     reason: 'MAX_TOKENS'
+                 });
+            }
+
             console.error('잘못된 API 응답 구조:', JSON.stringify(data));
             return res.status(500).json({
                 error: 'API 응답 구조가 올바르지 않습니다',
@@ -129,7 +144,7 @@ JSON 배열만 출력하세요.`;
             });
         }
         
-        let responseText = data.candidates[0].content.parts[0].text;
+        let responseText = candidate.content.parts[0].text;
         console.log('응답 텍스트 길이:', responseText.length);
 
         // JSON 추출
@@ -139,7 +154,7 @@ JSON 배열만 출력하세요.`;
         const jsonMatch = responseText.match(/\[[\s\S]*\]/);
         if (!jsonMatch) {
             console.error('JSON 매칭 실패. 원본 응답:', responseText.substring(0, 500));
-            return res.status(500).json({ 
+            return res.status(500).json({ 
                 error: 'JSON 형식을 찾을 수 없습니다',
                 rawResponse: responseText.substring(0, 500)
             });
@@ -239,23 +254,23 @@ JSON 배열만 출력하세요.`;
         }
 
         if (finalQuestions.length < 10) {
-            return res.status(500).json({ 
+            return res.status(500).json({ 
                 error: `검증 후 질문이 ${finalQuestions.length}개만 남았습니다.`,
-                questions: finalQuestions 
+                questions: finalQuestions 
             });
         }
 
         console.log('최종 질문 10개 준비 완료');
-        return res.status(200).json({ 
-            success: true, 
-            questions: finalQuestions 
+        return res.status(200).json({ 
+            success: true, 
+            questions: finalQuestions 
         });
 
     } catch (error) {
         console.error('서버 에러:', error);
-        return res.status(500).json({ 
+        return res.status(500).json({ 
             error: '서버 에러가 발생했습니다.',
-            message: error.message 
+            message: error.message 
         });
     }
 };
