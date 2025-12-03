@@ -1,7 +1,7 @@
 // Vercel Serverless Function
 // API Key를 안전하게 백엔드에서 관리
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     // CORS 헤더 설정
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -141,4 +141,31 @@ export default async function handler(req, res) {
                 console.log('19개 감지 - 자동 보정 시도');
                 // 마지막에 하나 더 추가 (임시로 첫 번째 질문 변형)
                 const extraQuestion = {
-                    option1: questi
+                    option1: questions[0].option1 + ' (추가)',
+                    option2: questions[0].option2 + ' (추가)'
+                };
+                questions.push(extraQuestion);
+                console.log('20개로 보정 완료');
+            } else {
+                // 19개가 아닌 다른 개수면 에러 반환
+                return res.status(500).json({ 
+                    error: `질문이 ${questions.length}개 생성되었습니다. 20개가 필요합니다.`,
+                    questions 
+                });
+            }
+        }
+
+        // 성공 응답
+        return res.status(200).json({ 
+            success: true, 
+            questions 
+        });
+
+    } catch (error) {
+        console.error('서버 에러:', error);
+        return res.status(500).json({ 
+            error: '서버 에러가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
