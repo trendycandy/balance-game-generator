@@ -34,6 +34,8 @@ module.exports = async function handler(req, res) {
             return res.status(500).json({ error: 'API Key가 설정되지 않았습니다.' });
         }
 
+
+
         const prompt = `You are a creative Korean balance game question creator.
 
 Topic: ${categoryDescription}
@@ -49,22 +51,30 @@ CRITICAL RULES - MUST FOLLOW:
    - NO English words longer than 3 letters
    - Examples of BANNED text: "公共交通機関", "ハイクラス", "transportation"
    - Use pure Korean: "대중교통", "고급", "이동"
+   - NO TYPOS: Write correct Korean (예: "새소리" not "새송음")
 
 3. LENGTH: Each option must be 10-30 Korean characters.
 
 4. BALANCE: Both options must have similar trade-offs.
+   - BAD: "좋은 것" vs "나쁜 것" (unfair)
+   - GOOD: "아침 일찍 출근하고 일찍 퇴근" vs "늦게 출근하고 늦게 퇴근"
 
-5. CREATIVITY: Make interesting, thought-provoking choices.
+5. CREATIVITY: Make interesting, thought-provoking, CREATIVE choices.
+   - Avoid boring comparisons like "music vs music"
+   - Make meaningful contrasts with clear trade-offs
 
 GOOD EXAMPLES (Korean only):
-- "평생 라면 금지" vs "평생 치킨 금지"
+- "평생 배달음식 금지하되 집밥 무료" vs "평생 집밥 금지하되 외식 반값"
 - "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
-- "매일 아침 일찍 출근하고 일찍 퇴근" vs "매일 늦게 출근하고 늦게 퇴근"
+- "텔레포트 가능하지만 하루 1회만" vs "투명화 가능하지만 30분만"
+- "평생 라면 금지" vs "평생 치킨 금지"
 
 BAD EXAMPLES (DO NOT USE):
 - "公共交通機関을 이용" (Contains Chinese)
 - "ハイクラスの 차량" (Contains Japanese)
 - "transportation 이용" (Contains long English)
+- "새송음 듣기" vs "음악 듣기" (Typo + not creative)
+- "7시 출근" vs "8시 출근" (Too simple)
 
 OUTPUT FORMAT (JSON array only, 30 questions):
 [
@@ -73,7 +83,10 @@ OUTPUT FORMAT (JSON array only, 30 questions):
   ... (total 30)
 ]
 
-IMPORTANT: Output ONLY the JSON array. No other text. Use ONLY Korean characters (한글).`;
+IMPORTANT: 
+- Output ONLY the JSON array. No other text.
+- Use ONLY correct Korean (한글).
+- Be CREATIVE and make trade-offs clear.`;
 
         // Groq API 호출
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -94,7 +107,7 @@ IMPORTANT: Output ONLY the JSON array. No other text. Use ONLY Korean characters
                         content: prompt
                     }
                 ],
-                temperature: 0.6,
+                temperature: 0.8,
                 max_tokens: 4500
             })
         });
