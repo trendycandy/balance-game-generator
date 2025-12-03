@@ -15,13 +15,11 @@
             <div class="loading-text">오늘의 질문을 생성하고 있어요...</div>
         </div>
     </div>
-
     <div class="container">
         <div class="header">
             <h1>🎮 빠져든다..밸런스 게임!</h1>
             <div class="subtitle">매일 자정, 새로운 밸런스 게임 문답 생성!</div>
         </div>
-
         <div class="content">
             <!-- 시작 화면 -->
             <div class="start-screen" id="startScreen">
@@ -33,15 +31,16 @@
                 </p>
                 <button class="start-btn" onclick="showCategoryScreen()">시작하기 🚀</button>
             </div>
-
             <!-- 카테고리 선택 화면 -->
             <div class="category-screen" id="categoryScreen">
                 <h2 style="text-align: center; margin-bottom: 20px; color: #333;">카테고리를 선택하세요</h2>
                 <div class="category-grid" id="categoryGrid"></div>
             </div>
-
             <!-- 게임 화면 -->
             <div class="game-screen" id="gameScreen">
+                <!-- 뒤로가기 버튼 추가 -->
+                <button class="back-btn" onclick="backToCategory()">← 카테고리 선택으로</button>
+                
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
@@ -50,10 +49,8 @@
                 <div class="question-box">
                     <h2 id="questionText"></h2>
                 </div>
-
                 <div class="choices" id="choices"></div>
             </div>
-
             <!-- 결과 화면 -->
             <div class="result-screen" id="resultScreen">
                 <div class="result-container" id="resultContainer">
@@ -63,12 +60,12 @@
                 </div>
                 <div class="action-buttons">
                     <button class="action-btn" onclick="downloadResult()">📥 결과 다운로드</button>
-                    <button class="action-btn secondary" onclick="restartGame()">🔄 다시 하기</button>
+                    <button class="action-btn secondary" onclick="goToCategory()">🎯 다른 카테고리 풀어보기</button>
+                    <button class="action-btn secondary" onclick="restartGame()">🏠 처음으로</button>
                 </div>
             </div>
         </div>
     </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
     <script src="./script.js" defer></script>
 </body>
