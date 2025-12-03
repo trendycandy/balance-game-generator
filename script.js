@@ -6,7 +6,7 @@ const categories = [
     { id: 'school', name: '학교생활', emoji: '🎓' },
     { id: 'work', name: '회사생활', emoji: '💼' },
     { id: 'hobby', name: '덕질생활', emoji: '⭐' },
-    { id: 'mahjong', name: '마작', emoji: '🀄' },
+    { id: 'mahjong', name: '리치치마작', emoji: '🀄' },
     { id: 'ability', name: '능력/초능력', emoji: '🦸' },
     { id: 'relationship', name: '연애/관계', emoji: '💕' },
     { id: 'money', name: '돈/재테크', emoji: '💰' },
@@ -89,7 +89,7 @@ async function generateQuestions(category) {
         'school': '학교생활 (수업, 친구, 동아리, 시험 등)',
         'work': '회사생활 (업무, 동료, 회식, 직장 문화 등)',
         'hobby': '덕질생활 (아이돌, 콘텐츠, 굿즈, 팬덤 등)',
-        'mahjong': '마작 (패, 전략, 룰, 상황 등)',
+        'mahjong': '리치마작 (좋아하는 역역, 타패 전략, 게임 상황 등)',
         'ability': '능력/초능력 (텔레포트, 투명화, 시간조작, 마법 등)',
         'relationship': '연애/관계 (연애 스타일, 데이트, 애정표현 등)',
         'money': '돈/재테크 (투자, 저축, 소비, 재무 목표 등)',
@@ -288,6 +288,24 @@ function getFallbackQuestions(categoryId) {
             { option1: '잠 안 자도 됨', option2: '먹지 않아도 됨' },
             { option1: '모든 악기 마스터', option2: '모든 운동 마스터' },
             { option1: '꿈 조종', option2: '감정 조종' }
+        ]
+        'mahjong': [
+            { option1: '리치 걸면 누군가 후로', option2: '리치 걸면 100% 쯔모 못함' },
+            { option1: '드림 역만 한 번 성공', option2: '평생 3판 이상 화료' },
+            { option1: '동4국 1등 그러나 배패 망함', option2: '동4국 꼴지 그러나 배패 최고급' },
+            { option1: '멘젠 유지 그러나 대기 약함', option2: '후로 하지만 대기 강함' },
+            { option1: '탕야오 빠르게', option2: '혼일색 천천히' },
+            { option1: '내 패는 최강이지만 상대도 최강', option2: '내 패는 평범한데 상대도 평범' },
+            { option1: '쯔모는 잘 되지만 론을 못함', option2: '론은 잘 되지만 쯔모를 못함' },
+            { option1: '도라 8장 대기패 1장', option2: '대기패 8장 도라 0장' },
+            { option1: '리치 일발 쯔모.. 끝', option2: '리치 이후 10순 버티고 만관 이상 화료' },
+            { option1: '패산에서 도라패가 어디 있는지 보임', option2: '상대 손패를 50% 예지 능력' },
+            { option1: '양면대기4장', option2: '샤보대기4장' },
+            { option1: '흐름은 좋은데 점수는 적음', option2: '점수는 큰데 흐름은 나쁨' },
+            { option1: '도라 3개 들고 시작 그러나 패 형태 망함', option2: '도라 0개 그러나 형태 최상' },
+            { option1: '전국치또이협회', option2: '전국또이또이협회' },
+            { option1: '오프마작 리치 시 초능력으로 리치BGM 흘러나옴', option2: '화료는 잘 되지만 연출 없음' },
+            { option1: '4등을 절대 안 하는 안정형', option2: '역만 한 번 터트리는 도박형' },
         ]
     };
 
