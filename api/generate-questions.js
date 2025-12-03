@@ -31,7 +31,64 @@ try {
     }
 } catch (e) {
     console.error("Error initializing Firebase Admin:", e);
-    // db를 undefined로 유지하여 Firestore 사용을 건너뜁니다.
+    // db를 undefined로 유지하여 Firestore 사용을 건너뛰도록 합니다.
+}
+
+// 지연 함수 (delay function)
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// 재시도 횟수 설정
+const MAX_RETRIES = 3;
+
+// API 호출을 재시도 로직으로 감싸는 함수
+async function callGeminiApiWithRetry(prompt, questionSchema, GEMINI_API_KEY) {
+    // Dynamic import를 사용하여 fetch 함수를 가져옵니다.
+    const fetch = (await import('node-fetch')).default;
+    
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            temperature: 0.9,
+                            responseMimeType: "application/json",
+                            responseSchema: questionSchema,
+                            maxOutputTokens: 8000, 
+                            topP: 0.95,
+                            topK: 64
+                        }
+                    })
+                }
+            );
+
+            if (response.status === 503 || response.status === 429) {
+                // 503 (Service Unavailable) 또는 429 (Rate Limit) 에러 발생 시 재시도
+                const delayTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // 1s, 2s, 4s + jitter
+                console.warn(`API 재시도: ${attempt + 1}/${MAX_RETRIES}, 상태 ${response.status}. ${Math.round(delayTime/1000)}초 후 재시도...`);
+                await delay(delayTime);
+                continue; // 다음 루프(재시도)로 이동
+            }
+            
+            // 성공 또는 복구 불가능한 다른 에러
+            return response;
+
+        } catch (error) {
+            // 네트워크 에러 등 처리 (재시도)
+            const delayTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+            console.error(`API 호출 네트워크 에러: ${error.message}. ${Math.round(delayTime/1000)}초 후 재시도...`);
+            await delay(delayTime);
+            continue;
+        }
+    }
+    // 모든 재시도가 실패하면 최종적으로 null 반환 (실패 처리 필요)
+    return null; 
 }
 
 
@@ -97,11 +154,6 @@ module.exports = async function handler(req, res) {
         }
         
         // 2. **질문 생성 로직 (캐시 미스 또는 캐시 비활성화 시)**
-        
-        // *** FIX: Dynamic import를 사용하여 fetch 함수를 가져옵니다. ***
-        // 'node-fetch'가 ES Module이므로, dynamic import를 사용해야 CommonJS 환경에서 로드할 수 있습니다.
-        const fetch = (await import('node-fetch')).default;
-        
         const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
 
 주제: ${categoryDescription}
@@ -128,47 +180,24 @@ module.exports = async function handler(req, res) {
             items: {
                 type: "OBJECT",
                 properties: {
-                    "option1": {
-                        type: "STRING",
-                        description: "밸런스 게임의 첫 번째 선택지 (8~25자, 한국어)"
-                    },
-                    "option2": {
-                        type: "STRING",
-                        description: "밸런스 게임의 두 번째 선택지 (8~25자, 한국어)"
-                    }
+                    "option1": { type: "STRING", description: "밸런스 게임의 첫 번째 선택지 (8~25자, 한국어)" },
+                    "option2": { type: "STRING", description: "밸런스 게임의 두 번째 선택지 (8~25자, 한국어)" }
                 },
                 required: ["option1", "option2"]
             }
         };
 
-        // Gemini 2.5 Flash API 호출
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.9,
-                        // JSON 출력을 위해 responseMimeType 설정
-                        responseMimeType: "application/json",
-                        responseSchema: questionSchema,
-                        // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 8000으로 충분히 설정
-                        maxOutputTokens: 8000, 
-                        topP: 0.95,
-                        topK: 64
-                    }
-                })
-            }
-        );
-
+        // 재시도 로직을 통해 API 호출
+        const response = await callGeminiApiWithRetry(prompt, questionSchema, GEMINI_API_KEY);
+        
+        if (!response) {
+             return res.status(503).json({ 
+                error: 'AI 질문 생성 실패 (최대 재시도 횟수 초과)', 
+                message: `Gemini API가 최대 ${MAX_RETRIES}번의 재시도 후에도 응답하지 않았습니다. 잠시 후 다시 시도해 주세요.`,
+                status: 503
+            });
+        }
+        
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Gemini API 에러:', response.status, errorText);
@@ -227,6 +256,7 @@ module.exports = async function handler(req, res) {
         console.log('후처리 검증 시작...');
         
         const validatedQuestions = rawQuestions.filter(q => {
+            // ... (검증 로직 생략, 동일)
             if (!q.option1 || !q.option2) {
                 console.log('제거: 선택지 누락', q);
                 return false;
