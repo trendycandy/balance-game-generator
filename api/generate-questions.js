@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 2. 두 선택지는 비슷한 난이도로 고민되어야 합니다
 3. 주제에 정확히 맞는 창의적이고 재미있는 질문을 만드세요
 4. 각 질문은 서로 다른 내용이어야 합니다
-5. 선택지는 구체적이지만 짧고 명확해야 합니다 (각 20자 이내)
+5. 선택지는 간결하고 명확해야 합니다 (각 20자 이내)
 
 출력 형식 (JSON만 출력):
 [
@@ -78,15 +78,28 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Groq API 에러:', errorText);
+            console.error('Groq API 에러:', response.status, errorText);
             return res.status(response.status).json({ 
                 error: 'AI 질문 생성 실패', 
-                details: errorText 
+                details: errorText,
+                status: response.status
             });
         }
 
         const data = await response.json();
+        console.log('Groq API 응답:', JSON.stringify(data).substring(0, 200));
+        
+        // 응답 구조 검증
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.error('잘못된 API 응답 구조:', JSON.stringify(data));
+            return res.status(500).json({
+                error: 'API 응답 구조가 올바르지 않습니다',
+                response: data
+            });
+        }
+        
         let responseText = data.choices[0].message.content;
+        console.log('응답 텍스트 길이:', responseText.length);
 
         // JSON 추출
         responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -94,16 +107,29 @@ export default async function handler(req, res) {
         // JSON 배열 찾기
         const jsonMatch = responseText.match(/\[[\s\S]*\]/);
         if (!jsonMatch) {
+            console.error('JSON 매칭 실패. 원본 응답:', responseText.substring(0, 500));
             return res.status(500).json({ 
                 error: 'JSON 형식을 찾을 수 없습니다',
-                rawResponse: responseText 
+                rawResponse: responseText.substring(0, 500)
             });
         }
 
-        const questions = JSON.parse(jsonMatch[0]);
+        let questions;
+        try {
+            questions = JSON.parse(jsonMatch[0]);
+            console.log('파싱된 질문 개수:', questions.length);
+        } catch (parseError) {
+            console.error('JSON 파싱 에러:', parseError.message);
+            return res.status(500).json({
+                error: 'JSON 파싱 실패',
+                parseError: parseError.message,
+                jsonText: jsonMatch[0].substring(0, 500)
+            });
+        }
 
         // 20개 검증
         if (questions.length !== 20) {
+            console.error('질문 개수 오류:', questions.length);
             return res.status(500).json({ 
                 error: `질문이 ${questions.length}개 생성되었습니다. 20개가 필요합니다.`,
                 questions 
