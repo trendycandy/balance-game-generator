@@ -6,6 +6,9 @@
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 
+// *** FIX: node-fetch 라이브러리를 명시적으로 불러옵니다. ***
+const fetch = require('node-fetch');
+
 let db;
 
 // Firebase 초기화 (Vercel 환경에서 한 번만 실행)
@@ -17,8 +20,8 @@ try {
         // 이미 초기화되었는지 확인 (Vercel 환경에 따라 필요할 수 있음)
         if (!initializeApp.length || initializeApp.length === 0) {
              initializeApp({
-                credential: cert(serviceAccount)
-            });
+                 credential: cert(serviceAccount)
+             });
         }
         db = getFirestore();
         console.log("Firestore Admin initialized.");
@@ -134,6 +137,7 @@ module.exports = async function handler(req, res) {
         };
 
         // Gemini 2.5 Flash API 호출
+        // 이제 명시적으로 require된 node-fetch의 fetch 함수를 사용합니다.
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
