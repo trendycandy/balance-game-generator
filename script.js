@@ -378,6 +378,18 @@ function showQuestion() {
 function selectAnswer(choiceIndex) {
     answers.push(choiceIndex);
     
+    // 유저 응답 로깅 (비동기, 에러 무시)
+    fetch('/api/log-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            category: currentCategory.id,
+            questionIndex: currentQuestionIndex,
+            choice: choiceIndex,
+            timestamp: Date.now()
+        })
+    }).catch(() => {}); // 에러 무시
+    
     if (currentQuestionIndex < 19) {
         currentQuestionIndex++;
         showQuestion();
