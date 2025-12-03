@@ -385,7 +385,7 @@ body {
 
 /* 뒤로가기 버튼 */
 .back-btn {
-    position: absolute;
+    position: fixed;  /* absolute → fixed로 변경 */
     top: 20px;
     left: 20px;
     background: rgba(255, 255, 255, 0.9);
@@ -398,7 +398,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: 'Noto Sans KR', sans-serif;
-    z-index: 10;
+    z-index: 1000;  /* 높은 값으로 변경 */
 }
 
 .back-btn:hover {
