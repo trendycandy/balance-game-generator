@@ -6,8 +6,8 @@
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 
-// *** FIX: node-fetch 라이브러리를 명시적으로 불러옵니다. ***
-const fetch = require('node-fetch');
+// *** FIX: ERR_REQUIRE_ESM 오류를 해결하기 위해 정적 require를 제거합니다. ***
+// const fetch = require('node-fetch'); // 이 줄을 제거합니다.
 
 let db;
 
@@ -97,6 +97,11 @@ module.exports = async function handler(req, res) {
         }
         
         // 2. **질문 생성 로직 (캐시 미스 또는 캐시 비활성화 시)**
+        
+        // *** FIX: Dynamic import를 사용하여 fetch 함수를 가져옵니다. ***
+        // 'node-fetch'가 ES Module이므로, dynamic import를 사용해야 CommonJS 환경에서 로드할 수 있습니다.
+        const fetch = (await import('node-fetch')).default;
+        
         const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
 
 주제: ${categoryDescription}
@@ -137,7 +142,6 @@ module.exports = async function handler(req, res) {
         };
 
         // Gemini 2.5 Flash API 호출
-        // 이제 명시적으로 require된 node-fetch의 fetch 함수를 사용합니다.
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
