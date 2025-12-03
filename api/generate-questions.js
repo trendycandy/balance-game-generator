@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
 
 반드시 지켜야 할 규칙:
 
-1. 질문 개수: 정확히 15개를 생성하세요. (검증 후 10개 선택)
+1. 질문 개수: 정확히 10개를 생성하세요. (최종 출력 개수에 맞게 15개에서 10개로 수정)
 
 2. 언어: 순수한 한국어만 사용하세요. 선택지에 설명이나 부연설명을 넣지 마세요.
 
@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
         // JSON 스키마 정의
         const questionSchema = {
             type: "ARRAY",
-            description: "15개의 밸런스 게임 질문 목록",
+            description: "10개의 밸런스 게임 질문 목록",
             items: {
                 type: "OBJECT",
                 properties: {
@@ -89,7 +89,6 @@ module.exports = async function handler(req, res) {
                             text: prompt
                         }]
                     }],
-                    // 필드 이름을 'config'에서 'generationConfig'로 수정
                     generationConfig: {
                         temperature: 0.9,
                         // JSON 출력을 위해 responseMimeType 설정
@@ -119,18 +118,18 @@ module.exports = async function handler(req, res) {
         
         const candidate = data.candidates?.[0];
 
-        // 응답 구조 및 MAX_TOKENS 검사
+        // *** FIX 2: JSON 파싱 에러를 피하기 위해 MAX_TOKENS 검사를 최우선으로 배치 ***
+        if (candidate && candidate.finishReason === 'MAX_TOKENS') {
+             console.error('API 응답 불완전 (MAX_TOKENS):', JSON.stringify(data));
+             return res.status(500).json({
+                 error: 'AI 응답이 최대 토큰 제한으로 인해 불완전합니다. 질문 개수를 10개로 줄였으니 재시도해 주세요.',
+                 response: data,
+                 reason: 'MAX_TOKENS'
+             });
+        }
+        
+        // 응답 구조 검사 (MAX_TOKENS가 아닌 다른 이유로 content가 없을 때)
         if (!candidate || !candidate.content || candidate.content.parts?.length === 0 || !candidate.content.parts?.[0]?.text) {
-            
-            if (candidate && candidate.finishReason === 'MAX_TOKENS') {
-                 console.error('API 응답 불완전 (MAX_TOKENS):', JSON.stringify(data));
-                 return res.status(500).json({
-                     error: 'AI 응답이 최대 토큰 제한으로 인해 불완전합니다. maxOutputTokens 설정을 확인하거나 질문 개수를 줄이세요.',
-                     response: data,
-                     reason: 'MAX_TOKENS'
-                 });
-            }
-
             console.error('잘못된 API 응답 구조:', JSON.stringify(data));
             return res.status(500).json({
                 error: 'API 응답 구조가 올바르지 않습니다',
@@ -154,6 +153,7 @@ module.exports = async function handler(req, res) {
             console.log('파싱된 질문 개수:', rawQuestions.length);
         } catch (parseError) {
             console.error('JSON 파싱 에러:', parseError.message);
+            // JSON 파싱 실패 시, 혹시 불완전한 JSON이라도 Fallback이 되도록 자세한 에러를 반환
             return res.status(500).json({
                 error: 'JSON 파싱 실패 (AI 출력 오류)',
                 parseError: parseError.message,
@@ -164,6 +164,7 @@ module.exports = async function handler(req, res) {
         // 후처리 검증 로직 (기존 로직 유지)
         console.log('후처리 검증 시작...');
         
+        // 질문 개수를 10개로 줄였으므로, 후처리 검증 후에는 10개만 남으면 됩니다.
         const validatedQuestions = rawQuestions.filter(q => {
             if (!q.option1 || !q.option2) {
                 console.log('제거: 선택지 누락', q);
