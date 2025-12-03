@@ -34,7 +34,6 @@ module.exports = async function handler(req, res) {
             return res.status(500).json({ error: 'API Key가 설정되지 않았습니다.' });
         }
 
-
         const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
 
 주제: ${categoryDescription}
@@ -42,7 +41,7 @@ module.exports = async function handler(req, res) {
 
 반드시 지켜야 할 규칙:
 
-1. 질문 개수: 정확히 30개를 생성하세요 (검증 후 20개 선택).
+1. 질문 개수: 정확히 15개를 생성하세요 (검증 후 10개 선택).
 
 2. 언어: 순수한 한국어만 사용하세요.
    - 일본어 금지, 한자 금지, 긴 영어 단어 금지
@@ -51,40 +50,27 @@ module.exports = async function handler(req, res) {
 3. 선택지 길이: 각 선택지는 8-25자 사이. (너무 길면 안 됨!)
    - 나쁜 예: "매일 아침 든든한 한식 조식 무료 제공받음" (너무 장황)
    - 좋은 예: "매일 아침 든든한 한식 조식"
-   - 나쁜 예: "매일 저녁 고급 레스토랑 외식 반값 할인받음" (너무 장황)
-   - 좋은 예: "매일 저녁 고급 레스토랑 외식"
 
 4. 간결성: 핵심만 표현하세요.
    - ✗ "~을 제공받음", "~을 할인받음", "~을 할 수 있음" 같은 불필요한 부가 설명 금지
    - ✓ 명사형으로 간결하게: "~조식", "~외식", "~능력"
-   - ✗ "연봉 1억을 받지만 주6일을 근무함" (장황)
-   - ✓ "연봉 1억이지만 주6일 근무" (간결)
 
 5. 밸런스: 두 선택지는 비슷한 수준의 장단점.
-   - 좋은 예: "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
 
 6. 창의성: 재미있고 고민되는 질문.
 
-좋은 예시 (간결함):
+좋은 예시:
 - "평생 라면 금지" vs "평생 치킨 금지"
 - "텔레포트 능력 하루 1회" vs "투명화 능력 30분만"
 - "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
-- "매일 아침 한식 조식" vs "매일 저녁 레스토랑 외식"
 
-나쁜 예시 (장황함 - 절대 하지 마세요):
-- "매일 아침 든든한 한식 조식을 무료로 제공받음" (너무 김)
-- "친구들과 만날 수 있지만" (문법 오류)
-- "볼링을 할 수 있는 시간" (불필요한 표현)
-- "공공교통기관" (한자)
-
-출력 형식 (JSON 배열만, 30개):
+출력 형식 (JSON 배열만, 15개):
 [
-  {"option1": "간결한 선택지1 (8-25자)", "option2": "간결한 선택지2 (8-25자)"},
-  ... (총 30개)
+  {"option1": "간결한 선택지1", "option2": "간결한 선택지2"},
+  ... (총 15개)
 ]
 
-JSON 배열만 출력하세요. 다른 설명 없이.`;
-
+JSON 배열만 출력하세요.`;
 
         // Gemini 2.5 Flash API 호출
         const response = await fetch(
@@ -102,7 +88,7 @@ JSON 배열만 출력하세요. 다른 설명 없이.`;
                     }],
                     generationConfig: {
                         temperature: 0.9,
-                        maxOutputTokens: 8000,
+                        maxOutputTokens: 4000,
                         topP: 0.95,
                         topK: 64
                     }
@@ -201,12 +187,12 @@ JSON 배열만 출력하세요. 다른 설명 없이.`;
                 return false;
             }
 
-            // 길이 검증
+            // 길이 검증 (더 엄격하게)
             if (opt1.length < 8 || opt2.length < 8) {
                 console.log('제거: 너무 짧음', opt1, 'vs', opt2);
                 return false;
             }
-            if (opt1.length > 35 || opt2.length > 35) {
+            if (opt1.length > 28 || opt2.length > 28) {
                 console.log('제거: 너무 김', opt1, 'vs', opt2);
                 return false;
             }
@@ -231,23 +217,24 @@ JSON 배열만 출력하세요. 다른 설명 없이.`;
 
         console.log(`검증 완료: ${rawQuestions.length}개 중 ${validatedQuestions.length}개 통과`);
 
-        let finalQuestions = validatedQuestions.slice(0, 20);
+        // 10개 선택 (검증된 질문 중 앞에서 10개)
+        let finalQuestions = validatedQuestions.slice(0, 10);
 
-        if (finalQuestions.length < 20) {
+        if (finalQuestions.length < 10) {
             console.warn(`경고: 검증 후 ${finalQuestions.length}개만 남음`);
             const remaining = rawQuestions.filter(q => !validatedQuestions.includes(q));
-            finalQuestions = [...finalQuestions, ...remaining].slice(0, 20);
+            finalQuestions = [...finalQuestions, ...remaining].slice(0, 10);
             console.log(`보정 후: ${finalQuestions.length}개`);
         }
 
-        if (finalQuestions.length < 20) {
+        if (finalQuestions.length < 10) {
             return res.status(500).json({ 
                 error: `검증 후 질문이 ${finalQuestions.length}개만 남았습니다.`,
                 questions: finalQuestions 
             });
         }
 
-        console.log('최종 질문 20개 준비 완료');
+        console.log('최종 질문 10개 준비 완료');
         return res.status(200).json({ 
             success: true, 
             questions: finalQuestions 
