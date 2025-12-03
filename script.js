@@ -6,7 +6,7 @@ const categories = [
     { id: 'school', name: '학교생활', emoji: '🎓' },
     { id: 'work', name: '회사생활', emoji: '💼' },
     { id: 'hobby', name: '덕질생활', emoji: '⭐' },
-    { id: 'mahjong', name: '리치치마작', emoji: '🀄' },
+    { id: 'mahjong', name: '리치마작', emoji: '🀄' },
     { id: 'ability', name: '능력/초능력', emoji: '🦸' },
     { id: 'relationship', name: '연애/관계', emoji: '💕' },
     { id: 'money', name: '돈/재테크', emoji: '💰' },
