@@ -8,55 +8,54 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-        <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
             <div class="loading-text">오늘의 질문을 생성하고 있어요...</div>
         </div>
     </div>
-    <div class="container">
-        <div class="header">
-            <h1>🎮 빠져든다..밸런스 게임!</h1>
-            <div class="subtitle">매일 자정, 새로운 밸런스 게임 생성!</div>
+
+        <div class="header">
+        <h1>🎮 빠져든다..밸런스 게임!</h1>
+        <div class="subtitle">매일 자정, 새로운 밸런스 게임 생성!</div>
+    </div>
+    <div class="content">
+        <div class="start-screen" id="startScreen">
+            <h2>👋 환영합니다!</h2>
+            <p>
+                매일 새롭게 생성되는 밸런스 게임입니다. (리치마작 제외) <br>
+                오늘의 질문은 모든 사용자에게 동일하게 제공됩니다!<br>
+                <strong>총 10개의 질문</strong>                     <strong>오늘의 날짜: <span id="todayDate"></span></strong>
+            </p>
+            
+            <button class="start-btn" onclick="showCategoryScreen()">시작하기 🚀</button>
         </div>
-        <div class="content">
-                        <div class="start-screen" id="startScreen">
-                <h2>👋 환영합니다!</h2>
-                <p>
-                    매일 새롭게 생성되는 밸런스 게임입니다. (리치마작 제외) <br>
-                    오늘의 질문은 모든 사용자에게 동일하게 제공됩니다!<br>
-                    <strong>총 10개의 질문</strong>                     <strong>오늘의 날짜: <span id="todayDate"></span></strong>
-                </p>
-                
-                <button class="start-btn" onclick="showCategoryScreen()">시작하기 🚀</button>
+        <div class="category-screen" id="categoryScreen" style="display: none;">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #333;">카테고리를 선택하세요</h2>
+            <div class="category-grid" id="categoryGrid"></div>
+        </div>
+        <div class="game-screen" id="gameScreen" style="display: none;">
+            <button class="back-btn" onclick="backToCategory()">← 카테고리 선택으로</button>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
             </div>
-                        <div class="category-screen" id="categoryScreen" style="display: none;">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">카테고리를 선택하세요</h2>
-                <div class="category-grid" id="categoryGrid"></div>
+            <div class="progress-text" id="progressText">1 / 10</div>                 
+            <div class="question-box">
+                <h2 id="questionText"></h2>
             </div>
-                        <div class="game-screen" id="gameScreen" style="display: none;">
-                                <button class="back-btn" onclick="backToCategory()">← 카테고리 선택으로</button>
-                
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="progress-text" id="progressText">1 / 10</div>                 
-                <div class="question-box">
-                    <h2 id="questionText"></h2>
-                </div>
-                <div class="choices" id="choices"></div>
+            <div class="choices" id="choices"></div>
+        </div>
+        <div class="result-screen" id="resultScreen" style="display: none;">
+            <div class="result-container" id="resultContainer">
+                <div class="result-title">🎉 당신의 선택 결과</div>
+                <div class="result-category" id="resultCategory"></div>
+                <div id="resultList"></div>
             </div>
-                        <div class="result-screen" id="resultScreen" style="display: none;">
-                <div class="result-container" id="resultContainer">
-                    <div class="result-title">🎉 당신의 선택 결과</div>
-                    <div class="result-category" id="resultCategory"></div>
-                    <div id="resultList"></div>
-                </div>
-                <div class="action-buttons">
-                    <button class="action-btn" onclick="downloadResult()">📥 결과 다운로드</button>
-                    <button class="action-btn secondary" onclick="goToCategory()">🎯 다른 카테고리 풀어보기</button>
-                    <button class="action-btn secondary" onclick="restartGame()">🏠 처음으로</button>
-                </div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="downloadResult()">📥 결과 다운로드</button>
+                <button class="action-btn secondary" onclick="goToCategory()">🎯 다른 카테고리 풀어보기</button>
+                <button class="action-btn secondary" onclick="restartGame()">🏠 처음으로</button>
             </div>
         </div>
     </div>
