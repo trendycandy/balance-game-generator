@@ -461,3 +461,29 @@ if (document.readyState === 'loading') {
     // DOM이 이미 로드된 경우 즉시 실행
     init();
 }
+
+// 게임 중 카테고리로 돌아가기
+function backToCategory() {
+    if (confirm('진행 중인 게임이 초기화됩니다. 카테고리 선택으로 돌아가시겠습니까?')) {
+        document.getElementById('gameScreen').style.display = 'none';
+        document.getElementById('categoryScreen').style.display = 'block';
+        
+        // 게임 상태 초기화
+        currentCategory = null;
+        questions = [];
+        currentQuestionIndex = 0;
+        answers = [];
+    }
+}
+
+// 결과 화면에서 다른 카테고리로 이동
+function goToCategory() {
+    document.getElementById('resultScreen').style.display = 'none';
+    document.getElementById('categoryScreen').style.display = 'block';
+    
+    // 게임 상태 초기화
+    currentCategory = null;
+    questions = [];
+    currentQuestionIndex = 0;
+    answers = [];
+}
