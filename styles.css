@@ -3,29 +3,26 @@
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    /* 배경색 유지 */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px; /* PC/Tablet 기본 패딩 */
+    padding: 20px; /* ⬅️ PC/Tablet 기본 패딩 유지 */
     overflow-x: hidden;
 }
 
 .container {
     width: 100%;
-    max-width: 800px;
+    max-width: 800px; /* ⬅️ PC/Tablet 최대 폭 제한 */
     background: white;
     border-radius: 30px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     animation: fadeIn 0.5s ease-out;
 }
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -409,26 +406,33 @@ body {
 /* 6. 미디어 쿼리 (반응형) */
 /* -------------------------------------- */
 @media (max-width: 768px) {
+    /* 🌟 body 패딩을 0으로 설정하여 container가 화면 전체를 꽉 채우도록 합니다. */
     body {
-        padding: 0; /* 모바일에서 body 패딩 제거 */
+        padding: 0; 
     }
     
+    /* 🌟 container가 모바일 화면의 전체 높이와 너비를 차지하도록 설정합니다. */
     .container {
-        border-radius: 0; /* 모바일에서 컨테이너 모서리 둥글게 제거 */
+        border-radius: 0; 
         min-height: 100vh;
+        /* max-width는 768px 이하에서 적용되지 않지만, 명확하게 설정 */
+        max-width: 100%; 
+    }
+    
+    /* 🔴 content 내부 패딩은 여백 확보를 위해 20px로 유지합니다. */
+    .content {
+        padding: 20px;
     }
     
     .header h1 {
         font-size: 2em;
     }
 
-    .content {
-        padding: 20px; /* 모바일 콘텐츠 패딩을 20px로 설정 */
-    }
-    
+    /* ... (나머지 모바일 스타일은 그대로 유지) ... */
+
     .category-grid {
         grid-template-columns: 1fr;
-        gap: 15px; /* 모바일 간격 줄임 */
+        gap: 15px;
     }
     
     .category-btn {
@@ -445,25 +449,6 @@ body {
         min-width: 100%;
         font-size: 1.1em;
         padding: 25px 20px;
-    }
-
-    .result-choices {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .result-choice {
-        min-width: 100%;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .action-btn {
-        padding: 12px 20px;
-        font-size: 1em;
     }
     
     /* 모바일에서 뒤로가기 버튼 위치 조정 */
