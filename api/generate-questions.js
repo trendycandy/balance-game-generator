@@ -215,7 +215,12 @@ async function preGenerateQuestions(db, GEMINI_API_KEY, dateSeed) {
             const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
 주제: ${categoryDescription}
 날짜 시드: ${dateSeed}
-반드시 지켜야 할 규칙: 1. 질문 개수: 정확히 10개를 생성하세요. 2. 언어: 순수한 한국어만 사용하세요. 3. 선택지 길이: 각 선택지는 8자 이상 25자 이하로 간결하게 유지하세요. 4. 밸런스: 두 선택지는 비슷한 수준의 trade-off여야 합니다. 5. Trade-off 구조: "장점 + 단점" 또는 "서로 다른 가치" 구조여야 합니다.
+반드시 지켜야 할 규칙: 
+1. 질문 개수: 정확히 10개를 생성하세요. 
+2. 언어: 순수한 한국어만 사용하세요. 
+3. 선택지 길이: 각 선택지는 8자 이상 25자 이하로 구체적이지만 명확하게 유지하세요. 
+4. 밸런스: 두 선택지는 비슷한 수준의 trade-off여야 합니다. 
+5. Trade-off 구조: "장점 + 단점" 또는 "서로 다른 가치" 구조여야 합니다.
 **JSON 배열로만 출력하세요. 다른 설명이나 텍스트를 포함하지 마세요.**`;
 
             const finalQuestions = await callGeminiApiAndValidate(prompt, GEMINI_API_KEY);
