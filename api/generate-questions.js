@@ -34,6 +34,7 @@ module.exports = async function handler(req, res) {
             return res.status(500).json({ error: 'API Key가 설정되지 않았습니다.' });
         }
 
+
         const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 전문가입니다.
 
 주제: ${categoryDescription}
@@ -43,15 +44,19 @@ module.exports = async function handler(req, res) {
 
 1. **질문 개수**: 반드시 정확히 25개를 생성하세요 (검증 후 20개 선택).
 
-2. **선택지 길이**: 각 선택지는 최소 10자 이상, 최대 30자 이내로 작성하세요.
+2. **언어**: 반드시 한국어로만 작성하세요. 일본어, 중국어, 영어 사용 금지.
 
-3. **논리적 일관성**: 두 선택지는 논리적으로 말이 되어야 합니다.
-   - 나쁜 예시: "늦게 출근하는데 일찍 퇴근" (말이 안 됨)
+3. **선택지 길이**: 각 선택지는 최소 10자 이상, 최대 30자 이내로 작성하세요.
 
-4. **공정한 밸런스**: 두 선택지는 비슷한 수준의 장단점이 있어야 합니다.
-   - 좋은 예시: "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
+4. **논리적 일관성**: 두 선택지는 논리적으로 말이 되어야 합니다.
 
-5. **Trade-off 구조**: 각 선택지는 "좋은 점 + 나쁜 점" 또는 "단순 대비" 구조.
+5. **공정한 밸런스**: 두 선택지는 비슷한 수준의 장단점이 있어야 합니다.
+
+6. **Trade-off 구조**: 각 선택지는 "좋은 점 + 나쁜 점" 또는 "단순 대비" 구조.
+
+**언어 관련 주의사항**:
+- 한국어만 사용 (일본어 ✗, 중국어 ✗, 영어 단어 최소화)
+- 예시: "ハイクラスの" → "고급" 또는 "하이클래스"로 표현
 
 출력 형식 (JSON 배열만, 25개):
 [
@@ -161,7 +166,30 @@ JSON만 출력하세요:`;
                 return false;
             }
 
-            // 4. 너무 단순한 패턴 검증 (숫자만 다른 경우)
+            // 4. 다국어 검증 - 일본어, 중국어, 영어(긴 단어) 제거
+            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(opt1 + opt2); // 히라가나, 가타카나
+            const hasChinese = /[\u4E00-\u9FFF]/.test(opt1 + opt2); // 한자 (한국 한자 제외하기 어려움)
+            const hasLongEnglish = /[a-zA-Z]{6,}/.test(opt1 + opt2); // 6글자 이상 연속 영어
+            
+            if (hasJapanese) {
+                console.log('제거: 일본어 포함', opt1, 'vs', opt2);
+                return false;
+            }
+            // 중국어는 한국 한자와 구분 어려워서 일단 제외
+            // if (hasChinese) {
+            //     console.log('제거: 중국어 포함', opt1, 'vs', opt2);
+            //     return false;
+            // }
+            
+            // 영어 단어가 너무 많으면 제거 (간단한 영어는 허용)
+            const englishRatio = (opt1 + opt2).match(/[a-zA-Z]/g)?.length || 0;
+            const totalLength = opt1.length + opt2.length;
+            if (englishRatio / totalLength > 0.3) { // 30% 이상 영어면 제거
+                console.log('제거: 영어 비율 높음', opt1, 'vs', opt2);
+                return false;
+            }
+
+            // 5. 너무 단순한 패턴 검증 (숫자만 다른 경우)
             const opt1WithoutNumbers = opt1.replace(/\d+/g, 'X');
             const opt2WithoutNumbers = opt2.replace(/\d+/g, 'X');
             if (opt1WithoutNumbers === opt2WithoutNumbers && opt1.length < 15) {
@@ -169,7 +197,7 @@ JSON만 출력하세요:`;
                 return false;
             }
 
-            // 5. 의미 없는 짧은 단어 검증
+            // 6. 의미 없는 짧은 단어 검증
             const shortWords = ['A', 'B', 'C', '가', '나'];
             if (shortWords.includes(opt1) || shortWords.includes(opt2)) {
                 console.log('제거: 의미 없는 짧은 단어', opt1, 'vs', opt2);
