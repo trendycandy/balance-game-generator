@@ -288,7 +288,7 @@ function getFallbackQuestions(categoryId) {
             { option1: '잠 안 자도 됨', option2: '먹지 않아도 됨' },
             { option1: '모든 악기 마스터', option2: '모든 운동 마스터' },
             { option1: '꿈 조종', option2: '감정 조종' }
-        ]
+        ],
         'mahjong': [
             { option1: '리치 걸면 누군가 후로', option2: '리치 걸면 100% 쯔모 못함' },
             { option1: '드림 역만 한 번 성공', option2: '평생 3판 이상 화료' },
