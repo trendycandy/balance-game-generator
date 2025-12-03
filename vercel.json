@@ -1,0 +1,11 @@
+// vercel.json
+{
+  "crons": [
+    {
+      "path": "/api/generate-questions",
+      // KST(한국 시간) 자정 (00:00) = UTC 15:00.
+      // UTC 15:00에 실행되도록 cron 표현식을 설정합니다.
+      "schedule": "0 15 * * *" 
+    }
+  ]
+}
