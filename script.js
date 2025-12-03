@@ -96,7 +96,7 @@ async function generateQuestions(category) {
         'school': '학교생활 (수업, 친구, 동아리, 시험 등)',
         'work': '회사생활 (업무, 동료, 회식, 직장 문화 등)',
         'hobby': '덕질생활 (아이돌, 콘텐츠, 굿즈, 팬덤 등)',
-        'mahjong': '리치마작 (좋아하는 역역, 타패 전략, 게임 상황 등)',
+        'mahjong': '리치마작 (좋아하는 역, 타패 전략, 게임 상황 등)',
         'ability': '능력/초능력 (텔레포트, 투명화, 시간조작, 마법 등)',
         'relationship': '연애/관계 (연애 스타일, 데이트, 애정표현 등)',
         'money': '돈/재테크 (투자, 저축, 소비, 재무 목표 등)',
@@ -126,7 +126,7 @@ async function generateQuestions(category) {
 
         const data = await response.json();
         
-        if (data.success && data.questions && data.questions.length === 20) {
+        if (data.success && data.questions && data.questions.length === 10) {
             questions = data.questions;
             console.log('AI 질문 생성 성공:', category.name);
         } else {
@@ -139,19 +139,19 @@ async function generateQuestions(category) {
     }
 }
 
-// Fallback 질문 (AI 생성 실패 시)
+// Fallback 질문 (AI 생성 실패 시) - 20개 중 랜덤 10개 선택
 function getFallbackQuestions(categoryId) {
     const fallbackData = {
         'daily': [
             { option1: '평생 라면 금지', option2: '평생 치킨 금지' },
-            { option1: '핸드폰 배터리 20%로 하루 버티기', option2: '와이파이 1칸으로 하루 버티기' },
+            { option1: '핸드폰 배터리 20%로 하루', option2: '와이파이 1칸으로 하루' },
             { option1: '매일 1시간 일찍 출근', option2: '매일 1시간 늦게 퇴근' },
             { option1: '1년 동안 커피 금지', option2: '1년 동안 야식 금지' },
-            { option1: '방 온도 10도에서 살기', option2: '방 온도 30도에서 살기' },
-            { option1: '평생 게임 금지', option2: '평생 술자리 금지' },
+            { option1: '방 온도 10도', option2: '방 온도 30도' },
+            { option1: '평생 게임 금지', option2: '평생 술 금지' },
             { option1: '일주일 침대 없음', option2: '일주일 샤워 없음' },
             { option1: '핸드폰 카메라 사라짐', option2: '핸드폰 스피커 사라짐' },
-            { option1: '오후 3시 갑자기 잠들기', option2: '새벽 3시 갑자기 깸' },
+            { option1: '오후 3시 갑자기 잠듦', option2: '새벽 3시 갑자기 깸' },
             { option1: '평생 단 음료만', option2: '평생 탄산음료만' },
             { option1: '평생 아침형 인간', option2: '평생 야행성' },
             { option1: '친구와 1주일 여행', option2: '혼자 1주일 여행' },
@@ -159,25 +159,25 @@ function getFallbackQuestions(categoryId) {
             { option1: '하루 1시간 텔레포트', option2: '하루 1시간 투명화' },
             { option1: '평생 에어컨 없이', option2: '평생 히터 없이' },
             { option1: '평생 배달음식 금지', option2: '평생 편의점 음식만' },
-            { option1: '하루 3시간만 자고 활기차게', option2: '하루 12시간 자야만 깸' },
+            { option1: '하루 3시간만 자고 활기참', option2: '하루 12시간 자야 깸' },
             { option1: '매일 아침 6시 기상', option2: '매일 새벽 2시 취침' },
             { option1: '평생 짠 음식만', option2: '평생 단 음식만' },
-            { option1: '일주일 말 못하기', option2: '일주일 듣지 못하기' }
+            { option1: '일주일 말 못함', option2: '일주일 듣지 못함' }
         ],
         'ideal-male': [
             { option1: '키 185cm 평범한 얼굴', option2: '키 170cm 잘생긴 얼굴' },
             { option1: '운동 잘하는 남자', option2: '요리 잘하는 남자' },
             { option1: '말 많은 외향적', option2: '말 적은 내향적' },
-            { option1: '연봉 1억 무뚝뚝', option2: '연봉 4천만 다정함' },
+            { option1: '연봉 1억 무뚝뚝', option2: '연봉 4천 다정함' },
             { option1: '유머 감각 최고', option2: '책임감 최고' },
             { option1: '패션 센스 좋음', option2: '운전 실력 좋음' },
             { option1: '가족 중시', option2: '친구 중시' },
             { option1: '애교 많음', option2: '카리스마 많음' },
-            { option1: '매일 연락하는', option2: '적당히 연락하는' },
+            { option1: '매일 연락함', option2: '적당히 연락함' },
             { option1: '게임 좋아함', option2: '운동 좋아함' },
             { option1: '직장인', option2: '프리랜서' },
-            { option1: '계획적인', option2: '즉흥적인' },
-            { option1: '부모님 살갑게', option2: '부모님 독립적' },
+            { option1: '계획적임', option2: '즉흥적임' },
+            { option1: '부모님께 살갑게', option2: '부모님께 독립적' },
             { option1: '사진 잘 찍어줌', option2: '길 잘 찾음' },
             { option1: '대기업 다님', option2: '스타트업 다님' },
             { option1: '술 잘 마심', option2: '술 안 마심' },
@@ -188,9 +188,9 @@ function getFallbackQuestions(categoryId) {
         ],
         'ideal-female': [
             { option1: '키 165cm 예쁜 얼굴', option2: '키 170cm 평범한 얼굴' },
-            { option1: '요리 잘하는', option2: '청소 잘하는' },
+            { option1: '요리 잘함', option2: '청소 잘함' },
             { option1: '명랑한 성격', option2: '차분한 성격' },
-            { option1: '연봉 8천만 바쁨', option2: '연봉 3천만 여유' },
+            { option1: '연봉 8천 바쁨', option2: '연봉 3천 여유' },
             { option1: '애교 많음', option2: '쿨함' },
             { option1: '패션 센스 좋음', option2: '화장 잘함' },
             { option1: '집순이', option2: '밖순이' },
@@ -198,7 +198,7 @@ function getFallbackQuestions(categoryId) {
             { option1: '매일 통화', option2: '적당히 통화' },
             { option1: '드라마 좋아함', option2: '영화 좋아함' },
             { option1: '귀여운 스타일', option2: '섹시한 스타일' },
-            { option1: '계획적인', option2: '즉흥적인' },
+            { option1: '계획적임', option2: '즉흥적임' },
             { option1: '독서 좋아함', option2: '운동 좋아함' },
             { option1: '요리사', option2: '디자이너' },
             { option1: '단발머리', option2: '긴 생머리' },
@@ -253,7 +253,7 @@ function getFallbackQuestions(categoryId) {
             { option1: '9 to 6', option2: '10 to 7' }
         ],
         'hobby': [
-            { option1: '좋아하는 아이돌 만나기', option2: '콘서트 평생 무료' },
+            { option1: '좋아하는 아이돌 만남', option2: '콘서트 평생 무료' },
             { option1: '굿즈 무제한 구매', option2: '앨범 무제한 구매' },
             { option1: '팬싸 당첨 100%', option2: '콘서트 표 100% 구매' },
             { option1: '최애 인스타 팔로우', option2: '최애 유튜브 알림' },
@@ -299,30 +299,143 @@ function getFallbackQuestions(categoryId) {
         'mahjong': [
             { option1: '리치 걸면 누군가 후로', option2: '리치 걸면 100% 쯔모 못함' },
             { option1: '드림 역만 한 번 성공', option2: '평생 3판 이상 화료' },
-            { option1: '동4국 1등 그러나 배패 망함', option2: '동4국 꼴지 그러나 배패 최고급' },
-            { option1: '멘젠 유지 그러나 대기 약함', option2: '후로 하지만 대기 강함' },
+            { option1: '동4국 1등 배패 망함', option2: '동4국 꼴지 배패 최고급' },
+            { option1: '멘젠 유지 대기 약함', option2: '후로 하지만 대기 강함' },
             { option1: '탕야오 빠르게', option2: '혼일색 천천히' },
-            { option1: '내 패는 최강이지만 상대도 최강', option2: '내 패는 평범한데 상대도 평범' },
-            { option1: '쯔모는 잘 되지만 론을 못함', option2: '론은 잘 되지만 쯔모를 못함' },
+            { option1: '내 패 최강 상대도 최강', option2: '내 패 평범 상대도 평범' },
+            { option1: '쯔모는 잘 됨 론 못함', option2: '론은 잘 됨 쯔모 못함' },
             { option1: '도라 8장 대기패 1장', option2: '대기패 8장 도라 0장' },
-            { option1: '리치 일발 쯔모.. 끝', option2: '리치 이후 10순 버티고 만관 이상 화료' },
-            { option1: '패산에서 도라패가 어디 있는지 보임', option2: '상대 손패를 50% 예지 능력' },
-            { option1: '양면대기4장', option2: '샤보대기4장' },
-            { option1: '흐름은 좋은데 점수는 적음', option2: '점수는 큰데 흐름은 나쁨' },
-            { option1: '도라 3개 들고 시작 그러나 패 형태 망함', option2: '도라 0개 그러나 형태 최상' },
+            { option1: '리치 일발 쯔모 끝', option2: '리치 후 10순 버팀 만관' },
+            { option1: '패산 도라패 위치 보임', option2: '상대 손패 50% 예지' },
+            { option1: '양면대기 4장', option2: '샤보대기 4장' },
+            { option1: '흐름 좋음 점수 적음', option2: '점수 큼 흐름 나쁨' },
+            { option1: '도라 3개 형태 망함', option2: '도라 0개 형태 최상' },
             { option1: '전국치또이협회', option2: '전국또이또이협회' },
-            { option1: '오프마작 리치 시 초능력으로 리치BGM 흘러나옴', option2: '화료는 잘 되지만 연출 없음' },
-            { option1: '4등을 절대 안 하는 안정형', option2: '역만 한 번 터트리는 도박형' },
+            { option1: '리치 시 BGM 흐름', option2: '화료 잘 됨 연출 없음' },
+            { option1: '4등 절대 안 함', option2: '역만 한 번 터트림' },
             { option1: '평생 역만만 노림', option2: '평생 탕야오만 화료' },
-            { option1: '치 안 하는 멘젠주의자', option2: '치/폰/깡 다 하는 후로파' },
+            { option1: '치 안 하는 멘젠주의', option2: '치폰깡 다 하는 후로파' },
             { option1: '평생 선입 1위', option2: '평생 역전 1위' },
             { option1: '평생 도라만 잡힘', option2: '평생 대기패 많음' }
+        ],
+        'relationship': [
+            { option1: '매일 만남', option2: '주 1회 만남' },
+            { option1: '스킨십 많음', option2: '스킨십 적음' },
+            { option1: '매일 연락', option2: '필요할 때만 연락' },
+            { option1: '이벤트 중시', option2: '일상 중시' },
+            { option1: '질투 많음', option2: '질투 없음' },
+            { option1: '싸우면 먼저 사과', option2: '싸우면 시간 필요' },
+            { option1: '연애 공개적', option2: '연애 비밀' },
+            { option1: '여행 자주', option2: '집데이트 자주' },
+            { option1: '선물 자주', option2: '편지 자주' },
+            { option1: '핸드폰 공유', option2: '핸드폰 개인적' },
+            { option1: '친구 소개 빠름', option2: '친구 소개 천천히' },
+            { option1: '결혼 빨리', option2: '결혼 천천히' },
+            { option1: '애정표현 자주', option2: '애정표현 적게' },
+            { option1: '미래 계획 구체적', option2: '미래 계획 여유롭게' },
+            { option1: '기념일 챙김', option2: '기념일 자유롭게' },
+            { option1: '데이트 비용 반반', option2: '데이트 비용 번갈아' },
+            { option1: '취미 같이', option2: '취미 각자' },
+            { option1: '부모님 빨리 만남', option2: '부모님 천천히 만남' },
+            { option1: '동거 빠름', option2: '동거 결혼 후' },
+            { option1: '갈등 즉시 해결', option2: '갈등 시간 두고 해결' }
+        ],
+        'money': [
+            { option1: '월급 5천 안정적', option2: '프리랜서 변동 많음' },
+            { option1: '저축 많이', option2: '투자 많이' },
+            { option1: '주식 투자', option2: '부동산 투자' },
+            { option1: '작은 돈 자주 벌기', option2: '큰 돈 가끔 벌기' },
+            { option1: '용돈 매달 정해짐', option2: '용돈 필요할 때' },
+            { option1: '명품 하나', option2: '실용품 여러 개' },
+            { option1: '저축 50%', option2: '소비 50%' },
+            { option1: '현금 사용', option2: '카드 사용' },
+            { option1: '재테크 공부', option2: '재테크 전문가 상담' },
+            { option1: '연봉 1억 스트레스', option2: '연봉 5천 여유' },
+            { option1: '보험 많이', option2: '보험 최소' },
+            { option1: '가계부 작성', option2: '자유롭게 소비' },
+            { option1: '할인 쿠폰 챙김', option2: '할인 신경 안 씀' },
+            { option1: '경제적 독립 빠름', option2: '경제적 독립 천천히' },
+            { option1: '비상금 많음', option2: '비상금 적음' },
+            { option1: '은행 적금', option2: '코인 투자' },
+            { option1: '월급 통장 분리', option2: '월급 통장 하나' },
+            { option1: '목표 저축액 정함', option2: '목표 저축액 자유' },
+            { option1: '재테크 앱 사용', option2: '재테크 수기 관리' },
+            { option1: '연금 일찍 준비', option2: '연금 나중에 준비' }
+        ],
+        'travel': [
+            { option1: '국내 여행 자주', option2: '해외 여행 가끔' },
+            { option1: '계획적 여행', option2: '즉흥적 여행' },
+            { option1: '호텔 숙박', option2: '게스트하우스 숙박' },
+            { option1: '유명 관광지', option2: '로컬 장소' },
+            { option1: '여행 사진 많이', option2: '여행 사진 적게' },
+            { option1: '액티비티 많음', option2: '휴식 많음' },
+            { option1: '맛집 투어', option2: '카페 투어' },
+            { option1: '혼자 여행', option2: '친구와 여행' },
+            { option1: '배낭 여행', option2: '캐리어 여행' },
+            { option1: '자연 여행', option2: '도시 여행' },
+            { option1: '여름 여행', option2: '겨울 여행' },
+            { option1: '등산', option2: '해변' },
+            { option1: '패키지 여행', option2: '자유 여행' },
+            { option1: '역사 문화 투어', option2: '쇼핑 투어' },
+            { option1: '아침 일찍 출발', option2: '여유롭게 출발' },
+            { option1: '렌터카 여행', option2: '대중교통 여행' },
+            { option1: '여행 블로그 작성', option2: '여행 기억만' },
+            { option1: '럭셔리 여행', option2: '가성비 여행' },
+            { option1: '단기 여행 자주', option2: '장기 여행 가끔' },
+            { option1: '여행 계획 꼼꼼히', option2: '여행 계획 대충' }
+        ],
+        'game': [
+            { option1: 'RPG 게임', option2: 'FPS 게임' },
+            { option1: 'PC 게임', option2: '모바일 게임' },
+            { option1: '싱글 플레이', option2: '멀티 플레이' },
+            { option1: '스토리 중시', option2: '플레이 중시' },
+            { option1: '게임 매일 1시간', option2: '게임 주말 몰아서' },
+            { option1: '게임 유료 결제', option2: '게임 무과금' },
+            { option1: '공포 게임', option2: '힐링 게임' },
+            { option1: '경쟁 게임', option2: '협동 게임' },
+            { option1: '고사양 게임', option2: '저사양 게임' },
+            { option1: '최신 게임', option2: '고전 게임' },
+            { option1: '게임 방송 보기', option2: '게임 직접 하기' },
+            { option1: '영화 보기', option2: '드라마 보기' },
+            { option1: '넷플릭스', option2: '유튜브' },
+            { option1: '액션 영화', option2: '로맨스 영화' },
+            { option1: '애니메이션', option2: '다큐멘터리' },
+            { option1: '예능 프로그램', option2: '뉴스 보기' },
+            { option1: '팟캐스트 듣기', option2: '음악 듣기' },
+            { option1: '웹툰 보기', option2: '웹소설 보기' },
+            { option1: '스포츠 관람', option2: '공연 관람' },
+            { option1: '게임 커뮤니티 활동', option2: '게임 혼자 즐기기' }
         ]
     };
 
-    // 다른 카테고리도 비슷하게 추가...
-    // 간단히 하기 위해 일상생활 패턴 재사용
-    return fallbackData[categoryId] || fallbackData['daily'];
+    const allQuestions = fallbackData[categoryId] || fallbackData['daily'];
+    
+    // 날짜 기반 시드로 랜덤하게 10개 선택 (같은 날은 같은 질문)
+    const randomIndices = seededShuffle([...Array(allQuestions.length).keys()], todaySeed).slice(0, 10);
+    
+    return randomIndices.map(i => allQuestions[i]);
+}
+
+// 시드 기반 셔플 함수 (같은 날짜면 같은 순서)
+function seededShuffle(array, seed) {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+        hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+        hash = hash & hash;
+    }
+    
+    const random = () => {
+        hash = (hash * 9301 + 49297) % 233280;
+        return hash / 233280;
+    };
+    
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    return shuffled;
 }
 
 // 로딩 표시/숨김
@@ -348,25 +461,23 @@ function startGame() {
 // 질문 표시
 function showQuestion() {
     const question = questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / 20) * 100;
+    const progress = ((currentQuestionIndex + 1) / 10) * 100;
     
     document.getElementById('progressFill').style.width = progress + '%';
     document.getElementById('progressText').textContent = 
-        `${currentQuestionIndex + 1} / 20`;
+        `${currentQuestionIndex + 1} / 10`;
     document.getElementById('questionText').textContent = 
         `${question.option1} VS ${question.option2}`;
     
     const choicesDiv = document.getElementById('choices');
     choicesDiv.innerHTML = '';
     
-    // 선택지 1
     const choice1 = document.createElement('button');
     choice1.className = 'choice-btn';
     choice1.textContent = question.option1;
     choice1.onclick = () => selectAnswer(0);
     choicesDiv.appendChild(choice1);
     
-    // 선택지 2
     const choice2 = document.createElement('button');
     choice2.className = 'choice-btn';
     choice2.textContent = question.option2;
@@ -378,19 +489,7 @@ function showQuestion() {
 function selectAnswer(choiceIndex) {
     answers.push(choiceIndex);
     
-    // 유저 응답 로깅 (비동기, 에러 무시)
-    fetch('/api/log-answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            category: currentCategory.id,
-            questionIndex: currentQuestionIndex,
-            choice: choiceIndex,
-            timestamp: Date.now()
-        })
-    }).catch(() => {}); // 에러 무시
-    
-    if (currentQuestionIndex < 19) {
+    if (currentQuestionIndex < 9) {
         currentQuestionIndex++;
         showQuestion();
     } else {
@@ -466,21 +565,12 @@ function restartGame() {
     answers = [];
 }
 
-// 초기화 실행 - DOM이 완전히 로드된 후 실행
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    // DOM이 이미 로드된 경우 즉시 실행
-    init();
-}
-
 // 게임 중 카테고리로 돌아가기
 function backToCategory() {
     if (confirm('진행 중인 게임이 초기화됩니다. 카테고리 선택으로 돌아가시겠습니까?')) {
         document.getElementById('gameScreen').style.display = 'none';
         document.getElementById('categoryScreen').style.display = 'block';
         
-        // 게임 상태 초기화
         currentCategory = null;
         questions = [];
         currentQuestionIndex = 0;
@@ -493,9 +583,15 @@ function goToCategory() {
     document.getElementById('resultScreen').style.display = 'none';
     document.getElementById('categoryScreen').style.display = 'block';
     
-    // 게임 상태 초기화
     currentCategory = null;
     questions = [];
     currentQuestionIndex = 0;
     answers = [];
+}
+
+// 초기화 실행
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
 }
