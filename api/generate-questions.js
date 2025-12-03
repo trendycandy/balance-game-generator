@@ -1,6 +1,37 @@
 // Vercel Serverless Function
 // API Key를 안전하게 백엔드에서 관리
 
+// Firebase Admin SDK import
+// Note: You must install 'firebase-admin' and set up a Service Account in Vercel environment variables (e.g., FIREBASE_SERVICE_ACCOUNT_KEY).
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+
+let db;
+
+// Firebase 초기화 (Vercel 환경에서 한 번만 실행)
+try {
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccountKey) {
+        // Vercel 환경 변수에서 Service Account JSON을 파싱
+        const serviceAccount = JSON.parse(serviceAccountKey);
+        // 이미 초기화되었는지 확인 (Vercel 환경에 따라 필요할 수 있음)
+        if (!initializeApp.length || initializeApp.length === 0) {
+             initializeApp({
+                credential: cert(serviceAccount)
+            });
+        }
+        db = getFirestore();
+        console.log("Firestore Admin initialized.");
+    } else {
+        // 이 메시지가 표시되면 Vercel 환경 변수 설정이 필요합니다.
+        console.error("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set. Caching will be disabled.");
+    }
+} catch (e) {
+    console.error("Error initializing Firebase Admin:", e);
+    // db를 undefined로 유지하여 Firestore 사용을 건너뜁니다.
+}
+
+
 module.exports = async function handler(req, res) {
     // CORS 헤더 설정
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -26,16 +57,43 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
         }
 
-        // Environment Variable에서 API Key 가져오기
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
         if (!GEMINI_API_KEY) {
             console.error('GEMINI_API_KEY가 설정되지 않았습니다.');
             return res.status(500).json({ error: 'API Key가 설정되지 않았습니다.' });
         }
+        
+        let finalQuestions = null;
 
-
-        // JSON 스키마를 사용하므로, 프롬프트는 요구사항에 집중하고 출력 형식은 generationConfig로 전달합니다.
+        // 1. **캐싱 로직: Firestore에서 질문 확인**
+        if (db) {
+            // 캐시 문서 ID: 날짜_카테고리 (매일 자정에 리셋됨)
+            const docId = `${dateSeed}_${category}`;
+            // 컬렉션 경로: dailyQuestions
+            const docRef = db.collection('dailyQuestions').doc(docId);
+            
+            try {
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    finalQuestions = docSnap.data().questions;
+                    console.log(`캐시 적중: ${docId}에서 질문 ${finalQuestions.length}개 로드`);
+                    return res.status(200).json({ 
+                        success: true, 
+                        questions: finalQuestions,
+                        source: 'cache' // 캐시에서 로드되었음을 알림
+                    });
+                }
+                console.log(`캐시 미스: ${docId}에 해당하는 질문이 없어 새로 생성합니다.`);
+            } catch (cacheError) {
+                console.error("Firestore 캐시 접근 에러:", cacheError);
+                // 캐시 접근 실패 시에는 질문 생성 로직으로 진행합니다.
+            }
+        } else {
+             console.log("Firestore가 초기화되지 않아 캐시 없이 API를 직접 호출합니다.");
+        }
+        
+        // 2. **질문 생성 로직 (캐시 미스 또는 캐시 비활성화 시)**
         const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
 
 주제: ${categoryDescription}
@@ -43,7 +101,7 @@ module.exports = async function handler(req, res) {
 
 반드시 지켜야 할 규칙:
 
-1. 질문 개수: 정확히 10개를 생성하세요. (최종 출력 개수에 맞게 15개에서 10개로 수정)
+1. 질문 개수: 정확히 10개를 생성하세요.
 
 2. 언어: 순수한 한국어만 사용하세요. 선택지에 설명이나 부연설명을 넣지 마세요.
 
@@ -94,7 +152,7 @@ module.exports = async function handler(req, res) {
                         // JSON 출력을 위해 responseMimeType 설정
                         responseMimeType: "application/json",
                         responseSchema: questionSchema,
-                        // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 4000에서 8000으로 충분히 설정
+                        // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 8000으로 충분히 설정
                         maxOutputTokens: 8000, 
                         topP: 0.95,
                         topK: 64
@@ -118,7 +176,7 @@ module.exports = async function handler(req, res) {
         
         const candidate = data.candidates?.[0];
 
-        // *** FIX 2: JSON 파싱 에러를 피하기 위해 MAX_TOKENS 검사를 최우선으로 배치 ***
+        // MAX_TOKENS 검사
         if (candidate && candidate.finishReason === 'MAX_TOKENS') {
              console.error('API 응답 불완전 (MAX_TOKENS):', JSON.stringify(data));
              return res.status(500).json({
@@ -128,7 +186,7 @@ module.exports = async function handler(req, res) {
              });
         }
         
-        // 응답 구조 검사 (MAX_TOKENS가 아닌 다른 이유로 content가 없을 때)
+        // 응답 구조 검사
         if (!candidate || !candidate.content || candidate.content.parts?.length === 0 || !candidate.content.parts?.[0]?.text) {
             console.error('잘못된 API 응답 구조:', JSON.stringify(data));
             return res.status(500).json({
@@ -139,13 +197,10 @@ module.exports = async function handler(req, res) {
         
         let responseText = candidate.content.parts[0].text;
         
-        // 구조화된 JSON 응답이므로, 추가적인 JSON 추출/정리 과정이 필요 없습니다.
         let rawQuestions;
         try {
-            // responseText는 이미 순수한 JSON 문자열이어야 합니다.
             rawQuestions = JSON.parse(responseText);
             
-            // JSON 배열만 요청했으므로, rawQuestions가 배열인지 확인
             if (!Array.isArray(rawQuestions)) {
                  throw new Error("API가 JSON 배열 대신 다른 형식의 JSON을 반환했습니다.");
             }
@@ -153,7 +208,6 @@ module.exports = async function handler(req, res) {
             console.log('파싱된 질문 개수:', rawQuestions.length);
         } catch (parseError) {
             console.error('JSON 파싱 에러:', parseError.message);
-            // JSON 파싱 실패 시, 혹시 불완전한 JSON이라도 Fallback이 되도록 자세한 에러를 반환
             return res.status(500).json({
                 error: 'JSON 파싱 실패 (AI 출력 오류)',
                 parseError: parseError.message,
@@ -164,7 +218,6 @@ module.exports = async function handler(req, res) {
         // 후처리 검증 로직 (기존 로직 유지)
         console.log('후처리 검증 시작...');
         
-        // 질문 개수를 10개로 줄였으므로, 후처리 검증 후에는 10개만 남으면 됩니다.
         const validatedQuestions = rawQuestions.filter(q => {
             if (!q.option1 || !q.option2) {
                 console.log('제거: 선택지 누락', q);
@@ -233,7 +286,7 @@ module.exports = async function handler(req, res) {
         console.log(`검증 완료: ${rawQuestions.length}개 중 ${validatedQuestions.length}개 통과`);
 
         // 10개 선택 (검증된 질문 중 앞에서 10개)
-        let finalQuestions = validatedQuestions.slice(0, 10);
+        finalQuestions = validatedQuestions.slice(0, 10);
 
         if (finalQuestions.length < 10) {
             console.warn(`경고: 검증 후 ${finalQuestions.length}개만 남음`);
@@ -248,11 +301,29 @@ module.exports = async function handler(req, res) {
                 questions: finalQuestions 
             });
         }
-
-        console.log('최종 질문 10개 준비 완료');
+        
+        // 3. **캐싱 로직: Firestore에 질문 저장**
+        if (db) {
+            const docId = `${dateSeed}_${category}`;
+            const docRef = db.collection('dailyQuestions').doc(docId);
+            
+            try {
+                await docRef.set({
+                    questions: finalQuestions,
+                    createdAt: new Date().toISOString()
+                });
+                console.log(`Firestore 캐시 저장 성공: ${docId}`);
+            } catch (saveError) {
+                console.error("Firestore 캐시 저장 에러:", saveError);
+                // 저장 실패 시에도 최종 질문은 반환합니다.
+            }
+        }
+        
+        console.log('최종 질문 10개 준비 완료 (생성 또는 캐시)');
         return res.status(200).json({ 
             success: true, 
-            questions: finalQuestions 
+            questions: finalQuestions,
+            source: db ? 'generated_and_cached' : 'generated_no_cache'
         });
 
     } catch (error) {
