@@ -80,9 +80,11 @@ module.exports = async function handler(req, res) {
 
 JSON 배열만 출력하세요. 다른 설명 없이.`;
 
-        // Gemini API 호출
+
+
+        // Gemini 2.5 Flash API 호출
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: "POST",
                 headers: {
@@ -96,7 +98,9 @@ JSON 배열만 출력하세요. 다른 설명 없이.`;
                     }],
                     generationConfig: {
                         temperature: 0.9,
-                        maxOutputTokens: 8000
+                        maxOutputTokens: 8000,
+                        topP: 0.95,
+                        topK: 64
                     }
                 })
             }
