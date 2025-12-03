@@ -35,6 +35,7 @@ module.exports = async function handler(req, res) {
         }
 
 
+        // JSON 스키마를 사용하므로, 프롬프트는 요구사항에 집중하고 출력 형식은 generationConfig로 전달합니다.
         const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
 
 주제: ${categoryDescription}
@@ -42,50 +43,41 @@ module.exports = async function handler(req, res) {
 
 반드시 지켜야 할 규칙:
 
-1. 질문 개수: 정확히 15개를 생성하세요 (검증 후 10개 선택).
+1. 질문 개수: 정확히 15개를 생성하세요. (검증 후 10개 선택)
 
-2. 언어: 순수한 한국어만 사용하세요.
+2. 언어: 순수한 한국어만 사용하세요. 선택지에 설명이나 부연설명을 넣지 마세요.
 
-3. 선택지 길이: 각 선택지는 8-25자 사이.
+3. 선택지 길이: 각 선택지는 8자 이상 25자 이하로 간결하게 유지하세요.
 
-4. 간결성: 핵심만 표현하세요.
+4. **밸런스 (매우 중요!)**: 두 선택지는 반드시 비슷한 수준의 trade-off를 가져야 합니다. 명백히 좋은 선택지나 나쁜 선택지를 만들지 마세요.
 
-5. **밸런스 (매우 중요!)**: 두 선택지는 반드시 비슷한 수준이어야 합니다.
-   ✗ 나쁜 예: "알람 없이 개운함" vs "알람 열 개에도 피곤함" (불공평 - 첫 번째가 명백히 좋음)
-   ✗ 나쁜 예: "한 달에 한 번 청소" vs "청소해도 늘 지저분함" (불공평 - 첫 번째가 명백히 좋음)
-   ✗ 나쁜 예: "100만원 받기" vs "아무것도 안 받기" (불공평)
-   ✓ 좋은 예: "알람 없이 6시 기상" vs "알람 10개 필요하지만 9시 기상"
-   ✓ 좋은 예: "한 달에 한 번 대청소하지만 힘듦" vs "매일 10분 청소"
-   ✓ 좋은 예: "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
+5. Trade-off 구조: 각 선택지는 "장점 + 단점" 또는 "서로 다른 가치" 구조여야 합니다.
 
-6. Trade-off 구조: 각 선택지는 "장점 + 단점" 또는 "서로 다른 가치" 구조여야 함.
-   - 선택지1: 좋은 점A + 나쁜 점B
-   - 선택지2: 좋은 점C + 나쁜 점D
-   - A와 C의 가치가 비슷해야 함!
+**JSON 배열로만 출력하세요. 다른 설명이나 텍스트를 포함하지 마세요.**`;
 
-7. 창의성: 재미있고 진짜 고민되는 질문.
-
-**밸런스 체크리스트**:
-- [ ] 두 선택지 중 하나가 명백히 좋지 않은가?
-- [ ] 두 선택지가 비슷한 수준의 가치를 가지는가?
-- [ ] Trade-off가 명확한가?
-
-좋은 예시:
-- "평생 라면 금지" vs "평생 치킨 금지"
-- "텔레포트 능력 하루 1회" vs "투명화 능력 30분만"
-- "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
-
-출력 형식 (JSON 배열만, 15개):
-[
-  {"option1": "간결한 선택지1", "option2": "간결한 선택지2"},
-  ... (총 15개)
-]
-
-JSON 배열만 출력하세요.`;
+        // JSON 스키마 정의
+        const questionSchema = {
+            type: "ARRAY",
+            description: "15개의 밸런스 게임 질문 목록",
+            items: {
+                type: "OBJECT",
+                properties: {
+                    "option1": {
+                        type: "STRING",
+                        description: "밸런스 게임의 첫 번째 선택지 (8~25자, 한국어)"
+                    },
+                    "option2": {
+                        type: "STRING",
+                        description: "밸런스 게임의 두 번째 선택지 (8~25자, 한국어)"
+                    }
+                },
+                required: ["option1", "option2"]
+            }
+        };
 
         // Gemini 2.5 Flash API 호출
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: "POST",
                 headers: {
@@ -97,8 +89,11 @@ JSON 배열만 출력하세요.`;
                             text: prompt
                         }]
                     }],
-                    generationConfig: {
+                    config: {
                         temperature: 0.9,
+                        // JSON 출력을 위해 responseMimeType 설정
+                        responseMimeType: "application/json",
+                        responseSchema: questionSchema,
                         // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 4000으로 충분히 설정
                         maxOutputTokens: 4000, 
                         topP: 0.95,
@@ -121,17 +116,15 @@ JSON 배열만 출력하세요.`;
         const data = await response.json();
         console.log('Gemini API 응답:', JSON.stringify(data).substring(0, 200));
         
-        const candidate = data.candidates?.[0]; // 옵셔널 체이닝으로 candidates[0] 접근
+        const candidate = data.candidates?.[0];
 
-        // *** 에러 수정 부분: 응답 구조의 유효성을 더욱 엄격하게 검사 ***
-        // candidates, content, parts, 그리고 최종 text까지 모두 존재하는지 확인
+        // 응답 구조 및 MAX_TOKENS 검사
         if (!candidate || !candidate.content || candidate.content.parts?.length === 0 || !candidate.content.parts?.[0]?.text) {
             
-            // MAX_TOKENS 에러를 명시적으로 처리
             if (candidate && candidate.finishReason === 'MAX_TOKENS') {
                  console.error('API 응답 불완전 (MAX_TOKENS):', JSON.stringify(data));
                  return res.status(500).json({
-                     error: 'AI 응답이 최대 토큰 제한으로 인해 불완전합니다. maxOutputTokens 설정을 확인하세요.',
+                     error: 'AI 응답이 최대 토큰 제한으로 인해 불완전합니다. maxOutputTokens 설정을 확인하거나 질문 개수를 줄이세요.',
                      response: data,
                      reason: 'MAX_TOKENS'
                  });
@@ -145,35 +138,29 @@ JSON 배열만 출력하세요.`;
         }
         
         let responseText = candidate.content.parts[0].text;
-        console.log('응답 텍스트 길이:', responseText.length);
-
-        // JSON 추출
-        responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         
-        // JSON 배열 찾기
-        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) {
-            console.error('JSON 매칭 실패. 원본 응답:', responseText.substring(0, 500));
-            return res.status(500).json({ 
-                error: 'JSON 형식을 찾을 수 없습니다',
-                rawResponse: responseText.substring(0, 500)
-            });
-        }
-
+        // 구조화된 JSON 응답이므로, 추가적인 JSON 추출/정리 과정이 필요 없습니다.
         let rawQuestions;
         try {
-            rawQuestions = JSON.parse(jsonMatch[0]);
+            // responseText는 이미 순수한 JSON 문자열이어야 합니다.
+            rawQuestions = JSON.parse(responseText);
+            
+            // JSON 배열만 요청했으므로, rawQuestions가 배열인지 확인
+            if (!Array.isArray(rawQuestions)) {
+                 throw new Error("API가 JSON 배열 대신 다른 형식의 JSON을 반환했습니다.");
+            }
+            
             console.log('파싱된 질문 개수:', rawQuestions.length);
         } catch (parseError) {
             console.error('JSON 파싱 에러:', parseError.message);
             return res.status(500).json({
-                error: 'JSON 파싱 실패',
+                error: 'JSON 파싱 실패 (AI 출력 오류)',
                 parseError: parseError.message,
-                jsonText: jsonMatch[0].substring(0, 500)
+                jsonText: responseText.substring(0, 500)
             });
         }
 
-        // 후처리 검증 로직
+        // 후처리 검증 로직 (기존 로직 유지)
         console.log('후처리 검증 시작...');
         
         const validatedQuestions = rawQuestions.filter(q => {
