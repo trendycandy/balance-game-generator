@@ -94,8 +94,8 @@ module.exports = async function handler(req, res) {
                         // JSON 출력을 위해 responseMimeType 설정
                         responseMimeType: "application/json",
                         responseSchema: questionSchema,
-                        // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 4000으로 충분히 설정
-                        maxOutputTokens: 4000, 
+                        // MAX_TOKENS 에러를 줄이기 위해 토큰 제한을 4000에서 8000으로 충분히 설정
+                        maxOutputTokens: 8000, 
                         topP: 0.95,
                         topK: 64
                     }
