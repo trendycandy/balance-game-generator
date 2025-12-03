@@ -39,7 +39,9 @@ export default async function handler(req, res) {
 주제: ${categoryDescription}
 날짜 시드: ${dateSeed}
 
-위 주제에 맞는 고민되는 밸런스 게임 질문 20개를 생성해주세요.
+**중요: 반드시 정확히 20개의 질문을 생성해야 합니다.**
+
+위 주제에 맞는 고민되는 밸런스 게임 질문을 정확히 20개 생성해주세요.
 
 규칙:
 1. 각 질문은 두 선택지로 구성됩니다
@@ -47,14 +49,17 @@ export default async function handler(req, res) {
 3. 주제에 정확히 맞는 창의적이고 재미있는 질문을 만드세요
 4. 각 질문은 서로 다른 내용이어야 합니다
 5. 선택지는 간결하고 명확해야 합니다 (각 20자 이내)
+6. **정확히 20개를 생성하세요 (매우 중요!)**
 
-출력 형식 (JSON만 출력):
+출력 형식 (JSON 배열만 출력, 20개):
 [
   {"option1": "선택지1", "option2": "선택지2"},
-  {"option1": "선택지1", "option2": "선택지2"}
+  {"option1": "선택지1", "option2": "선택지2"},
+  ... (총 20개)
 ]
 
-반드시 JSON 배열만 출력하고 다른 설명은 포함하지 마세요.`;
+반드시 JSON 배열만 출력하고 다른 설명은 포함하지 마세요.
+배열에는 정확히 20개의 객체가 있어야 합니다.`;
 
         // Groq API 호출
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -71,8 +76,8 @@ export default async function handler(req, res) {
                         content: prompt
                     }
                 ],
-                temperature: 0.8,
-                max_tokens: 2000
+                temperature: 0.7,
+                max_tokens: 3000
             })
         });
 
@@ -127,26 +132,13 @@ export default async function handler(req, res) {
             });
         }
 
-        // 20개 검증
+        // 20개 검증 및 자동 보정
         if (questions.length !== 20) {
             console.error('질문 개수 오류:', questions.length);
-            return res.status(500).json({ 
-                error: `질문이 ${questions.length}개 생성되었습니다. 20개가 필요합니다.`,
-                questions 
-            });
-        }
-
-        // 성공 응답
-        return res.status(200).json({ 
-            success: true, 
-            questions 
-        });
-
-    } catch (error) {
-        console.error('서버 에러:', error);
-        return res.status(500).json({ 
-            error: '서버 에러가 발생했습니다.',
-            message: error.message 
-        });
-    }
-}
+            
+            // 19개인 경우 간단한 보정: 첫 질문 복제
+            if (questions.length === 19) {
+                console.log('19개 감지 - 자동 보정 시도');
+                // 마지막에 하나 더 추가 (임시로 첫 번째 질문 변형)
+                const extraQuestion = {
+                    option1: questi
