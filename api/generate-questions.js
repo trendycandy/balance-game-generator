@@ -34,37 +34,46 @@ module.exports = async function handler(req, res) {
             return res.status(500).json({ error: 'API Key가 설정되지 않았습니다.' });
         }
 
+        const prompt = `You are a creative Korean balance game question creator.
 
-        const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 전문가입니다.
+Topic: ${categoryDescription}
+Date Seed: ${dateSeed}
 
-주제: ${categoryDescription}
-날짜 시드: ${dateSeed}
+CRITICAL RULES - MUST FOLLOW:
 
-# 매우 중요한 규칙:
+1. Generate EXACTLY 30 questions (will be filtered to 20).
 
-1. **질문 개수**: 반드시 정확히 25개를 생성하세요 (검증 후 20개 선택).
+2. LANGUAGE: Use ONLY KOREAN (한국어). 
+   - NO Japanese (日本語 禁止)
+   - NO Chinese (中文 禁止)
+   - NO English words longer than 3 letters
+   - Examples of BANNED text: "公共交通機関", "ハイクラス", "transportation"
+   - Use pure Korean: "대중교통", "고급", "이동"
 
-2. **언어**: 반드시 한국어로만 작성하세요. 일본어, 중국어, 영어 사용 금지.
+3. LENGTH: Each option must be 10-30 Korean characters.
 
-3. **선택지 길이**: 각 선택지는 최소 10자 이상, 최대 30자 이내로 작성하세요.
+4. BALANCE: Both options must have similar trade-offs.
 
-4. **논리적 일관성**: 두 선택지는 논리적으로 말이 되어야 합니다.
+5. CREATIVITY: Make interesting, thought-provoking choices.
 
-5. **공정한 밸런스**: 두 선택지는 비슷한 수준의 장단점이 있어야 합니다.
+GOOD EXAMPLES (Korean only):
+- "평생 라면 금지" vs "평생 치킨 금지"
+- "연봉 1억이지만 주6일 근무" vs "연봉 5천이지만 주4일 근무"
+- "매일 아침 일찍 출근하고 일찍 퇴근" vs "매일 늦게 출근하고 늦게 퇴근"
 
-6. **Trade-off 구조**: 각 선택지는 "좋은 점 + 나쁜 점" 또는 "단순 대비" 구조.
+BAD EXAMPLES (DO NOT USE):
+- "公共交通機関을 이용" (Contains Chinese)
+- "ハイクラスの 차량" (Contains Japanese)
+- "transportation 이용" (Contains long English)
 
-**언어 관련 주의사항**:
-- 한국어만 사용 (일본어 ✗, 중국어 ✗, 영어 단어 최소화)
-- 예시: "ハイクラスの" → "고급" 또는 "하이클래스"로 표현
-
-출력 형식 (JSON 배열만, 25개):
+OUTPUT FORMAT (JSON array only, 30 questions):
 [
-  {"option1": "구체적인 선택지1", "option2": "구체적인 선택지2"},
-  ... (총 25개)
+  {"option1": "순수 한국어 선택지1", "option2": "순수 한국어 선택지2"},
+  {"option1": "순수 한국어 선택지1", "option2": "순수 한국어 선택지2"},
+  ... (total 30)
 ]
 
-JSON만 출력하세요:`;
+IMPORTANT: Output ONLY the JSON array. No other text. Use ONLY Korean characters (한글).`;
 
         // Groq API 호출
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -77,12 +86,16 @@ JSON만 출력하세요:`;
                 model: "llama-3.3-70b-versatile",
                 messages: [
                     {
+                        role: "system",
+                        content: "You are a Korean language expert. You ONLY write in Korean (한글). Never use Japanese, Chinese, or long English words."
+                    },
+                    {
                         role: "user",
                         content: prompt
                     }
                 ],
-                temperature: 0.7,
-                max_tokens: 4000
+                temperature: 0.6,
+                max_tokens: 4500
             })
         });
 
@@ -137,7 +150,7 @@ JSON만 출력하세요:`;
             });
         }
 
-        // 후처리 검증 로직
+        // 후처리 검증 로직 (더 엄격하게)
         console.log('후처리 검증 시작...');
         
         const validatedQuestions = rawQuestions.filter(q => {
@@ -150,7 +163,35 @@ JSON만 출력하세요:`;
             const opt1 = q.option1.trim();
             const opt2 = q.option2.trim();
 
-            // 2. 길이 검증 (최소 8자, 최대 35자)
+            // 2. 다국어 검증 (가장 먼저!)
+            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(opt1 + opt2);
+            const hasChineseOrJapaneseKanji = /[\u4E00-\u9FFF]/.test(opt1 + opt2);
+            const hasLongEnglish = /[a-zA-Z]{4,}/.test(opt1 + opt2); // 4글자 이상 영어
+            
+            if (hasJapanese) {
+                console.log('제거: 일본어 포함', opt1, 'vs', opt2);
+                return false;
+            }
+            if (hasChineseOrJapaneseKanji) {
+                console.log('제거: 한자 포함', opt1, 'vs', opt2);
+                return false;
+            }
+            if (hasLongEnglish) {
+                console.log('제거: 긴 영어 단어 포함', opt1, 'vs', opt2);
+                return false;
+            }
+
+            // 3. 한글 비율 체크 (70% 이상이어야 함)
+            const koreanCount = (opt1 + opt2).match(/[가-힣]/g)?.length || 0;
+            const totalLength = opt1.length + opt2.length;
+            const koreanRatio = koreanCount / totalLength;
+            
+            if (koreanRatio < 0.7) {
+                console.log('제거: 한글 비율 낮음', koreanRatio.toFixed(2), opt1, 'vs', opt2);
+                return false;
+            }
+
+            // 4. 길이 검증 (최소 8자, 최대 35자)
             if (opt1.length < 8 || opt2.length < 8) {
                 console.log('제거: 너무 짧음', opt1, 'vs', opt2);
                 return false;
@@ -160,36 +201,13 @@ JSON만 출력하세요:`;
                 return false;
             }
 
-            // 3. 동일한 선택지 검증
+            // 5. 동일한 선택지 검증
             if (opt1 === opt2) {
                 console.log('제거: 동일한 선택지', opt1);
                 return false;
             }
 
-            // 4. 다국어 검증 - 일본어, 중국어, 영어(긴 단어) 제거
-            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(opt1 + opt2); // 히라가나, 가타카나
-            const hasChinese = /[\u4E00-\u9FFF]/.test(opt1 + opt2); // 한자 (한국 한자 제외하기 어려움)
-            const hasLongEnglish = /[a-zA-Z]{6,}/.test(opt1 + opt2); // 6글자 이상 연속 영어
-            
-            if (hasJapanese) {
-                console.log('제거: 일본어 포함', opt1, 'vs', opt2);
-                return false;
-            }
-            // 중국어는 한국 한자와 구분 어려워서 일단 제외
-            // if (hasChinese) {
-            //     console.log('제거: 중국어 포함', opt1, 'vs', opt2);
-            //     return false;
-            // }
-            
-            // 영어 단어가 너무 많으면 제거 (간단한 영어는 허용)
-            const englishRatio = (opt1 + opt2).match(/[a-zA-Z]/g)?.length || 0;
-            const totalLength = opt1.length + opt2.length;
-            if (englishRatio / totalLength > 0.3) { // 30% 이상 영어면 제거
-                console.log('제거: 영어 비율 높음', opt1, 'vs', opt2);
-                return false;
-            }
-
-            // 5. 너무 단순한 패턴 검증 (숫자만 다른 경우)
+            // 6. 너무 단순한 패턴 검증
             const opt1WithoutNumbers = opt1.replace(/\d+/g, 'X');
             const opt2WithoutNumbers = opt2.replace(/\d+/g, 'X');
             if (opt1WithoutNumbers === opt2WithoutNumbers && opt1.length < 15) {
@@ -197,7 +215,7 @@ JSON만 출력하세요:`;
                 return false;
             }
 
-            // 6. 의미 없는 짧은 단어 검증
+            // 7. 의미 없는 짧은 단어 검증
             const shortWords = ['A', 'B', 'C', '가', '나'];
             if (shortWords.includes(opt1) || shortWords.includes(opt2)) {
                 console.log('제거: 의미 없는 짧은 단어', opt1, 'vs', opt2);
@@ -211,13 +229,12 @@ JSON만 출력하세요:`;
 
         console.log(`검증 완료: ${rawQuestions.length}개 중 ${validatedQuestions.length}개 통과`);
 
-        // 20개 선택 (검증된 질문 중 앞에서 20개)
+        // 20개 선택
         let finalQuestions = validatedQuestions.slice(0, 20);
 
-        // 20개 미만이면 경고 로그
+        // 20개 미만이면 보정
         if (finalQuestions.length < 20) {
             console.warn(`경고: 검증 후 ${finalQuestions.length}개만 남음. 20개 필요.`);
-            // 부족한 만큼 검증 안 된 질문으로 채우기
             const remaining = rawQuestions.filter(q => !validatedQuestions.includes(q));
             finalQuestions = [...finalQuestions, ...remaining].slice(0, 20);
             console.log(`보정 후: ${finalQuestions.length}개`);
