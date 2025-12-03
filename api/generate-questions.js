@@ -89,7 +89,8 @@ module.exports = async function handler(req, res) {
                             text: prompt
                         }]
                     }],
-                    config: {
+                    // 필드 이름을 'config'에서 'generationConfig'로 수정
+                    generationConfig: {
                         temperature: 0.9,
                         // JSON 출력을 위해 responseMimeType 설정
                         responseMimeType: "application/json",
