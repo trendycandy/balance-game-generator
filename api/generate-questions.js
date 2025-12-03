@@ -295,8 +295,9 @@ module.exports = async function handler(req, res) {
         }
     }
 
+    // ... (기존 코드 상단 유지) ...
 
-    // 2. 🚀 POST 요청 처리 (클라이언트 요청용 - 기존 캐싱/생성 로직)
+    // 2. 🚀 POST 요청 처리 (클라이언트 요청용 - 캐시 히트만 허용)
     if (req.method === 'POST') {
         try {
             const { category, categoryDescription, dateSeed: requestDateSeed } = req.body;
@@ -306,8 +307,8 @@ module.exports = async function handler(req, res) {
             }
             
             let finalQuestions = null;
-
-            // 1. **캐싱 로직: Firestore에서 질문 확인**
+    
+            // 1. **캐싱 로직: Firestore에서 질문 확인 (필수)**
             if (db) {
                 const docId = `${requestDateSeed}_${category}`;
                 const docRef = db.collection('dailyQuestions').doc(docId);
@@ -316,62 +317,40 @@ module.exports = async function handler(req, res) {
                     const docSnap = await docRef.get();
                     if (docSnap.exists) {
                         finalQuestions = docSnap.data().questions;
-                        console.log(`캐시 적중: ${docId}에서 질문 ${finalQuestions.length}개 로드`);
+                        console.log(`POST: 캐시 적중: ${docId}에서 질문 ${finalQuestions.length}개 로드`);
+                        
+                        // 캐시된 질문을 반환
                         return res.status(200).json({ 
                             success: true, 
                             questions: finalQuestions,
-                            source: 'cache' // 캐시에서 로드되었음을 알림
+                            source: 'cache'
                         });
                     }
-                    console.log(`캐시 미스: ${docId}에 해당하는 질문이 없어 새로 생성합니다.`);
+                
+                    // ⚠️ 캐시 미스 발생: Cron Job이 실패했거나 아직 실행되지 않았음을 의미
+                    console.warn(`POST: 캐시 미스 발생 (${docId}). 클라이언트에게 Fallback 사용 요청.`);
+                
+                    // 🚨 캐시 미스 시 API 호출을 건너뛰고 404를 반환하여 클라이언트가 Fallback을 사용하도록 유도
+                    return res.status(404).json({
+                        error: '캐시된 질문이 없습니다.', 
+                        message: '오늘의 질문이 아직 생성되지 않았거나 Cron Job이 실패했습니다. 클라이언트 Fallback을 사용하세요.',
+                        source: 'fallback_required'
+                    });
+                
                 } catch (cacheError) {
                     console.error("Firestore 캐시 접근 에러:", cacheError);
+                    // 캐시 접근 에러 시에도 API 호출 대신 실패 메시지 반환
+                    return res.status(500).json({ 
+                        error: 'Firestore 접근 실패', 
+                        message: '캐시 서버에 문제가 있어 질문을 로드할 수 없습니다.' 
+                    });
                 }
             } else {
-                 console.log("Firestore가 초기화되지 않아 캐시 없이 API를 직접 호출합니다.");
+                 // DB가 초기화되지 않은 경우, API 호출을 시도하는 대신 에러 반환
+                 console.error("Firestore가 초기화되지 않아 캐시 기능을 사용할 수 없습니다.");
+                 return res.status(500).json({ error: '서버 설정 오류 (Firestore 비활성화)' });
             }
-            
-            // 2. **질문 생성 로직 (캐시 미스 또는 캐시 비활성화 시)**
-            const prompt = `당신은 창의적이고 재미있는 밸런스 게임 질문을 만드는 한국어 전문가입니다.
-주제: ${categoryDescription}
-날짜 시드: ${requestDateSeed}
-반드시 지켜야 할 규칙: 1. 질문 개수: 정확히 10개를 생성하세요. 2. 언어: 순수한 한국어만 사용하세요. 3. 선택지 길이: 각 선택지는 8자 이상 25자 이하로 간결하게 유지하세요. 4. 밸런스: 두 선택지는 비슷한 수준의 trade-off여야 합니다. 5. Trade-off 구조: "장점 + 단점" 또는 "서로 다른 가치" 구조여야 합니다.
-**JSON 배열로만 출력하세요. 다른 설명이나 텍스트를 포함하지 마세요.**`;
-
-            try {
-                finalQuestions = await callGeminiApiAndValidate(prompt, GEMINI_API_KEY);
-            } catch (e) {
-                console.error('API 질문 생성 및 검증 실패:', e.message);
-                return res.status(500).json({
-                    error: 'AI 질문 생성 실패',
-                    details: e.message
-                });
-            }
-
-            // 3. **캐싱 로직: Firestore에 질문 저장**
-            if (db) {
-                const docId = `${requestDateSeed}_${category}`;
-                const docRef = db.collection('dailyQuestions').doc(docId);
-                
-                try {
-                    await docRef.set({
-                        questions: finalQuestions,
-                        createdAt: new Date().toISOString(),
-                        generatedBy: 'ClientRequest'
-                    });
-                    console.log(`Firestore 캐시 저장 성공: ${docId}`);
-                } catch (saveError) {
-                    console.error("Firestore 캐시 저장 에러:", saveError);
-                }
-            }
-            
-            console.log('최종 질문 10개 준비 완료 (생성 후 클라이언트 반환)');
-            return res.status(200).json({ 
-                success: true, 
-                questions: finalQuestions,
-                source: db ? 'generated_and_cached' : 'generated_no_cache'
-            });
-
+    
         } catch (error) {
             console.error('POST 요청 서버 에러:', error);
             return res.status(500).json({ 
@@ -380,7 +359,9 @@ module.exports = async function handler(req, res) {
             });
         }
     }
-    
+    // ... (기존 코드 하단 유지) ...
+
+
     // POST/GET/OPTIONS 이외의 요청 처리
     return res.status(405).json({ error: 'Method not allowed' });
 };
