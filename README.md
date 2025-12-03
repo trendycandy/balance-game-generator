@@ -4,7 +4,7 @@
 
 ## ✨ 주요 기능
 
-- 🤖 **AI 자동 생성**: 무료 Hugging Face API로 매일 새로운 질문 생성
+- 🤖 **AI 자동 생성**: 매일 새로운 질문 생성
 - 📅 **하루 단위 업데이트**: 모든 사용자가 같은 날 같은 질문 공유
 - 🎯 **12개 카테고리**: 일상생활, 이상형, 학교생활, 회사생활, 덕질, 능력 등
 - 📥 **결과 다운로드**: 선택한 답변을 노란색 하이라이트로 이미지 저장
@@ -20,13 +20,6 @@ balance-game-project/
 ├── script.js           # JavaScript 로직
 └── README.md           # 설명서
 ```
-
-## 🤖 AI 모델 정보
-
-- **API**: Hugging Face Inference API (무료)
-- **모델**: microsoft/Phi-3-mini-4k-instruct
-- **제한**: 하루 이용 횟수 제한 있음 (무료 플랜)
-- **Fallback**: API 실패 시 미리 준비된 질문 사용
 
 ## 💡 작동 원리
 
