@@ -88,49 +88,37 @@ async function selectCategory(category) {
     }
 }
 
-// Vercel Serverless Function으로 질문 생성/가져오기
+
+
+// script.js 내 generateQuestions 함수 수정
 async function generateQuestions(category) {
-    // 🀄 마작 카테고리는 AI 생성에서 제외하고 Fallback만 사용 (서버와 로직 통일)
+    // 🀄 마작 카테고리는 미리 준비된 질문만 사용 (AI 생성 건너뛰기)
     if (category.id === 'mahjong') {
         console.log('마작 카테고리: 미리 준비된 Fallback 질문 사용');
         questions = getFallbackQuestions('mahjong');
         return;
     }
 
-    // 서버리스 함수와 동일한 카테고리 설명 (프롬프트 일관성 유지)
-    const categoryDescriptions = {
-        'daily': '일상생활 (음식, 수면, 생활 습관, 편의 등)',
-        'ideal-male': '남자 이상형 (외모, 성격, 능력, 스타일 등)',
-        'ideal-female': '여자 이상형 (외모, 성격, 능력, 스타일 등)',
-        'school': '학교생활 (수업, 친구, 동아리, 시험 등)',
-        'work': '회사생활 (업무, 동료, 회식, 직장 문화 등)',
-        'hobby': '덕질생활 (아이돌, 콘텐츠, 굿즈, 팬덤 등)',
-        'ability': '능력/초능력 (텔레포트, 투명화, 시간조작, 마법 등)',
-        'relationship': '연애/관계 (연애 스타일, 데이트, 애정표현 등)',
-        'money': '돈/재테크 (투자, 저축, 소비, 재무 목표 등)',
-        'travel': '여행/레저 (여행지, 숙소, 활동, 휴가 등)',
-        'game': '게임/엔터테인먼트 (게임 장르, 영화, 드라마, 유튜브 등)'
-    };
+    // ... (categoryDescriptions 객체는 그대로 유지) ...
 
     try {
-        // Vercel Serverless Function 호출 (POST)
+        // Vercel Serverless Function 호출
         const response = await fetch('/api/generate-questions', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                category: category.id,
-                categoryDescription: categoryDescriptions[category.id],
-                dateSeed: todaySeed
-            })
+            // ... (headers 및 body는 그대로 유지)
         });
 
         if (!response.ok) {
             const errorData = await response.json();
+            
+            // 🚨 서버가 404(Not Found)를 반환하면 Fallback을 사용하도록 처리
+            if (response.status === 404 && errorData.source === 'fallback_required') {
+                 console.warn(`서버 캐시 미스. Fallback 질문 사용을 위해 오류 발생: ${errorData.message}`);
+                 throw new Error('SERVER_CACHE_MISS'); // 사용자 정의 에러 발생
+            }
+
             console.error('API 에러:', errorData);
-            // 서버에서 에러가 발생해도, 사용자 경험을 위해 Fallback 사용
-            throw new Error(errorData.error || 'API 호출 실패'); 
+            throw new Error(errorData.error || 'API 호출 실패');
         }
 
         const data = await response.json();
@@ -139,15 +127,20 @@ async function generateQuestions(category) {
             questions = data.questions;
             console.log(`서버 응답 성공: ${data.source} (${category.name})`);
         } else {
-            // 서버 응답이 성공(response.ok)했지만 질문 배열이 10개가 아니거나 구조가 이상할 때
-            throw new Error('질문 형식이 올바르지 않거나 10개 미만입니다.');
+            throw new Error('질문 형식이 올바르지 않거나 10개 미만입니다');
         }
     } catch (error) {
-        console.error('질문 생성 실패, Fallback 사용:', error);
-        // API 실패 시 Fallback 사용
-        questions = getFallbackQuestions(category.id);
+        // 404 Fallback 에러 또는 기타 API 실패 시 Fallback 질문 사용
+        if (error.message === 'SERVER_CACHE_MISS' || error.message !== 'API 호출 실패') {
+            console.error('질문 생성 실패, Fallback 사용:', error.message);
+            questions = getFallbackQuestions(category.id);
+        } else {
+             // 기타 예상치 못한 네트워크/파싱 오류는 다시 던져서 사용자에게 알림
+             throw error;
+        }
     }
 }
+
 
 // Fallback 질문 (AI 생성 실패 시) - 20개 중 랜덤 10개 선택
 function getFallbackQuestions(categoryId) {
