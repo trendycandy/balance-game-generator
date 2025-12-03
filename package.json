@@ -1,0 +1,13 @@
+{
+  "name": "balance-game-generator",
+  "version": "1.0.0",
+  "description": "Gemini API를 이용한 밸런스 게임 생성기",
+  "main": "api/generate-questions.js",
+  "scripts": {
+    "start": "node api/generate-questions.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.1",
+    "node-fetch": "^3.3.2"
+  }
+}
